@@ -47,46 +47,54 @@ export default function Home() {
   }, []);
 
   // --- QR Scanner Logic (FIXED) ---
-  const sendAttendance = async (scannedValue) => {
-    
-    // 1. Get the Token
+const sendAttendance = async (scannedValue) => {
     const token = localStorage.getItem('token'); 
-    if (!token) {
-        alert("Erreur: Vous n'êtes pas connecté (Token manquant).");
+    const userId = localStorage.getItem('userId');
+    const fullName = localStorage.getItem('username'); 
+    const email = localStorage.getItem('email');
+
+    if (!token || !userId || !fullName || !email) {
+        alert("Erreur: informations manquantes ou utilisateur non connecté.");
         return;
     }
 
     try {
-      // 2. Call the Backend API
-      // Ensure the port (3000 or 5000) matches your running server
-      const res = await fetch("http://localhost:3000/api/attendance/scan", { 
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` // Send Token for AuthMiddleware
-        },
-        body: JSON.stringify({ secretCode: scannedValue }), // Send the scanned QR code
-      });
+        const res = await fetch("https://remet-ai-yudu.vercel.app/api/attendance/scan", { 
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+                secretCode: scannedValue,
+                userId,
+                fullName,
+                email
+            }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.ok) {
-          // 3. Success Case
-          console.log("Attendance Success:", data);
-          alert(`✅ ${data.message}`); // Show Success Message
-          setShowScannerModal(false); 
-          unlockScroll();
-      } else {
-          // 4. Error Case (Invalid QR or Already Scanned)
-          console.error("Attendance Error:", data);
-          alert(`⚠️ ${data.message}`);
-      }
+        if (res.ok) {
+            console.log("Attendance Success:", data);
+            // Save info to localStorage
+            localStorage.setItem('attendanceSessionId', data.data.sessionId || null);
+            localStorage.setItem('attendanceClass', data.data.class || null);
+
+            alert(`✅ ${data.message}`);
+            setShowScannerModal(false); 
+            unlockScroll();
+        } else {
+            console.error("Attendance Error:", data);
+            alert(`⚠️ ${data.message}`);
+        }
 
     } catch (error) {
-      console.error("Network Error:", error);
-      alert("❌ Erreur de connexion au serveur.");
+        console.error("Network Error:", error);
+        alert("❌ Erreur de connexion au serveur.");
     }
-  };
+};
+
 
   const openScanner = () => { setShowScannerModal(true); lockScroll(); };
   const closeScanner = () => { setShowScannerModal(false); unlockScroll(); };
@@ -109,11 +117,22 @@ export default function Home() {
       <Footer />
 
       {/* --- Presence Button --- */}
-      {showPresenceBtn && (
+      {/* {showPresenceBtn && (
         <button className="floating-presence-btn" onClick={openScanner}>
           <span className="scan-icon">📷</span> Présence
         </button>
+      )} */}
+           {showPresenceBtn && (
+            <a href="#program">
+
+                <button className="floating-presence-btn" >
+          <span className="scan-icon">📷</span> Présence
+        </button>
+            </a>
+      
       )}
+
+
 
       {showScannerModal && (
         <QRScannerModal 

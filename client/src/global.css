@@ -2982,3 +2982,15 @@ width: 20px;  transform: translateY(-50%);
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+
+
+
+.qr_code_img{
+
+
+margin: auto;
+display: block;
+margin-bottom: 20px;
+
+}

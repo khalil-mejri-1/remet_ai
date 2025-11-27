@@ -4,17 +4,17 @@ import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import { FiLogOut } from "react-icons/fi";
 import { FaCheckCircle } from "react-icons/fa"; // You might need to install react-icons/fa if not present, or use an emoji
-
+import Gestion_compte from './Gestioncompte'; // Assure-toi du chemin correct
 export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop, onAuthUpdate }) {
 
   // --- UI States ---
   const [isOpen, setIsOpen] = useState(false);
   const [showModal_register, setShowModal_register] = useState(false);
   const [showModal_login, setShowModal_login] = useState(false);
-  
+
   // State for the Auth Alert Popup
   const [showAuthAlert, setShowAuthAlert] = useState(false);
-  
+
   // NEW: State for the Success/Already Registered Popup
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
@@ -32,6 +32,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const [formData, setFormData] = useState({
     fullname: '', email: '', password: '', confirmPassword: ''
   });
+  const [showAdminModal, setShowAdminModal] = useState(false); // NOUVEL ÉTAT POUR LA MODALE ADMIN
 
   // --- Helpers ---
   const lockScroll = () => { document.body.style.overflow = 'hidden'; };
@@ -39,25 +40,27 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
   const openModal = () => { if (onOpenWorkshop) onOpenWorkshop(); setIsOpen(false); };
   const closeModal = () => { if (onCloseWorkshop) onCloseWorkshop(); };
+  const openAdminModal = () => { setShowAdminModal(true); setIsOpen(false); lockScroll(); };
+  const closeAdminModal = () => { setShowAdminModal(false); unlockScroll(); };
 
   // Update existing openers to ensure they close alerts if open
-  const openModal_register = () => { 
-      setShowAuthAlert(false); 
-      setShowSuccessAlert(false); // Close success alert
-      setShowModal_register(true); 
-      setShowModal_login(false); 
-      setIsOpen(false); 
-      lockScroll(); 
+  const openModal_register = () => {
+    setShowAuthAlert(false);
+    setShowSuccessAlert(false); // Close success alert
+    setShowModal_register(true);
+    setShowModal_login(false);
+    setIsOpen(false);
+    lockScroll();
   };
   const closeModal_register = () => { setShowModal_register(false); unlockScroll(); };
 
-  const openModal_login = () => { 
-      setShowAuthAlert(false); 
-      setShowSuccessAlert(false); // Close success alert
-      setShowModal_login(true); 
-      setShowModal_register(false); 
-      setIsOpen(false); 
-      lockScroll(); 
+  const openModal_login = () => {
+    setShowAuthAlert(false);
+    setShowSuccessAlert(false); // Close success alert
+    setShowModal_login(true);
+    setShowModal_register(false);
+    setIsOpen(false);
+    lockScroll();
   };
   const closeModal_login = () => { setShowModal_login(false); unlockScroll(); };
 
@@ -67,23 +70,23 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   useEffect(() => {
     // Handler for Auth Alert
     const handleAuthTrigger = () => {
-        setShowAuthAlert(true);
-        lockScroll();
+      setShowAuthAlert(true);
+      lockScroll();
     };
 
     // Handler for Success/Already Registered Alert
     const handleSuccessTrigger = () => {
-        setShowSuccessAlert(true);
-        lockScroll();
+      setShowSuccessAlert(true);
+      lockScroll();
     };
 
     window.addEventListener('trigger-auth-alert', handleAuthTrigger);
     window.addEventListener('trigger-success-alert', handleSuccessTrigger);
-    
+
     // Cleanup
     return () => {
-        window.removeEventListener('trigger-auth-alert', handleAuthTrigger);
-        window.removeEventListener('trigger-success-alert', handleSuccessTrigger);
+      window.removeEventListener('trigger-auth-alert', handleAuthTrigger);
+      window.removeEventListener('trigger-success-alert', handleSuccessTrigger);
     };
   }, []);
 
@@ -92,32 +95,32 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   // ----------------------------------------------------------------
   useEffect(() => {
     const checkRegistrationStatus = async () => {
-        const isAuth = localStorage.getItem('login') === 'true';
-        const savedEmail = localStorage.getItem('userEmail');
-        const savedName = localStorage.getItem('userName');
+      const isAuth = localStorage.getItem('login') === 'true';
+      const savedEmail = localStorage.getItem('userEmail');
+      const savedName = localStorage.getItem('userName');
 
-        if (isAuth && savedEmail) {
-            try {
-                const response = await axios.get(`http://localhost:3000/api/check-registration/${savedEmail}`);
-                
-                if (response.data.registered) {
-                    localStorage.setItem('WORKSHOP', 'true');
-                } else {
-                    localStorage.removeItem('WORKSHOP');
-                    setWorkshopForm(prev => ({
-                        ...prev,
-                        fullname: savedName || prev.fullname,
-                        email: savedEmail || prev.email
-                    }));
-                }
-            } catch (error) {
-                console.error("Error checking registration status:", error);
-            }
+      if (isAuth && savedEmail) {
+        try {
+          const response = await axios.get(`https://remet-ai-yudu.vercel.app/api/check-registration/${savedEmail}`);
+
+          if (response.data.registered) {
+            localStorage.setItem('WORKSHOP', 'true');
+          } else {
+            localStorage.removeItem('WORKSHOP');
+            setWorkshopForm(prev => ({
+              ...prev,
+              fullname: savedName || prev.fullname,
+              email: savedEmail || prev.email
+            }));
+          }
+        } catch (error) {
+          console.error("Error checking registration status:", error);
         }
+      }
     };
     checkRegistrationStatus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ----------------------------------------------------------------
   // 2. Google Login Logic
@@ -133,23 +136,23 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         const userData = userInfo.data;
 
         try {
-            const res = await axios.post('http://localhost:3000/api/google-login', {
-                fullName: userData.name,
-                email: userData.email
-             });
-             
-             if (res.data.token) localStorage.setItem('token', res.data.token);
-             if (res.data.userId) localStorage.setItem('userId', res.data.userId);
-             if (res.data._id) localStorage.setItem('userId', res.data._id);
+          const res = await axios.post('https://remet-ai-yudu.vercel.app/api/google-login', {
+            fullName: userData.name,
+            email: userData.email
+          });
+
+          if (res.data.token) localStorage.setItem('token', res.data.token);
+          if (res.data.userId) localStorage.setItem('userId', res.data.userId);
+          if (res.data._id) localStorage.setItem('userId', res.data._id);
 
         } catch (serverError) {
-            console.error("Backend Google Sync Error:", serverError);
+          console.error("Backend Google Sync Error:", serverError);
         }
 
         localStorage.setItem('userName', userData.name);
         localStorage.setItem('userEmail', userData.email);
         localStorage.setItem('login', 'true');
-        
+
         setIsLoggedIn(true);
         if (onAuthUpdate) onAuthUpdate();
 
@@ -162,17 +165,17 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         closeModal_login();
         closeModal_register();
 
-        setTimeout(() => { 
-             axios.get(`http://localhost:3000/api/check-registration/${userData.email}`)
-                .then(res => {
-                    if (!res.data.registered) {
-                        localStorage.removeItem('WORKSHOP');
-                        openModal();
-                    } else {
-                        localStorage.setItem('WORKSHOP', 'true');
-                    }
-                })
-                .catch(() => openModal()); 
+        setTimeout(() => {
+          axios.get(`https://remet-ai-yudu.vercel.app/api/check-registration/${userData.email}`)
+            .then(res => {
+              if (!res.data.registered) {
+                localStorage.removeItem('WORKSHOP');
+                openModal();
+              } else {
+                localStorage.setItem('WORKSHOP', 'true');
+              }
+            })
+            .catch(() => openModal());
         }, 500);
 
       } catch (error) {
@@ -188,43 +191,43 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-        alert("Les mots de passe ne correspondent pas !");
-        return;
+      alert("Les mots de passe ne correspondent pas !");
+      return;
     }
 
     try {
-        const res = await axios.post('http://localhost:3000/api/register', {
-            fullName: formData.fullname,
-            email: formData.email,
-            password: formData.password
-        });
+      const res = await axios.post('https://remet-ai-yudu.vercel.app/api/register', {
+        fullName: formData.fullname,
+        email: formData.email,
+        password: formData.password
+      });
 
-        if (res.data.token) localStorage.setItem('token', res.data.token);
-        if (res.data.userId) localStorage.setItem('userId', res.data.userId);
-        if (res.data._id) localStorage.setItem('userId', res.data._id);
+      if (res.data.token) localStorage.setItem('token', res.data.token);
+      if (res.data.userId) localStorage.setItem('userId', res.data.userId);
+      if (res.data._id) localStorage.setItem('userId', res.data._id);
 
-        localStorage.setItem('login', 'true');
-        localStorage.setItem('userName', formData.fullname);
-        localStorage.setItem('userEmail', formData.email);
+      localStorage.setItem('login', 'true');
+      localStorage.setItem('userName', formData.fullname);
+      localStorage.setItem('userEmail', formData.email);
 
-        setIsLoggedIn(true);
-        if (onAuthUpdate) onAuthUpdate();
+      setIsLoggedIn(true);
+      if (onAuthUpdate) onAuthUpdate();
 
-        closeModal_register();
-        
-        setWorkshopForm(prev => ({
-            ...prev,
-            fullname: formData.fullname,
-            email: formData.email
-        }));
+      closeModal_register();
 
-        alert("Compte créé avec succès !");
-        localStorage.removeItem('WORKSHOP');
-        setTimeout(() => { openModal(); }, 500);
+      setWorkshopForm(prev => ({
+        ...prev,
+        fullname: formData.fullname,
+        email: formData.email
+      }));
+
+      alert("Compte créé avec succès !");
+      localStorage.removeItem('WORKSHOP');
+      setTimeout(() => { openModal(); }, 500);
 
     } catch (error) {
-        console.error("Registration Error:", error);
-        alert(error.response?.data?.message || "Erreur lors de l'inscription");
+      console.error("Registration Error:", error);
+      alert(error.response?.data?.message || "Erreur lors de l'inscription");
     }
   };
 
@@ -234,46 +237,46 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-        const res = await axios.post('http://localhost:3000/api/login', {
-            email: email,
-            password: password
-        });
+      const res = await axios.post('https://remet-ai-yudu.vercel.app/api/login', {
+        email: email,
+        password: password
+      });
 
-        if (res.data.token) localStorage.setItem('token', res.data.token);
-        if (res.data.userId) localStorage.setItem('userId', res.data.userId);
-        if (res.data._id) localStorage.setItem('userId', res.data._id);
+      if (res.data.token) localStorage.setItem('token', res.data.token);
+      if (res.data.userId) localStorage.setItem('userId', res.data.userId);
+      if (res.data._id) localStorage.setItem('userId', res.data._id);
 
-        localStorage.setItem('login', 'true');
-        localStorage.setItem('userName', res.data.fullName);
-        localStorage.setItem('userEmail', email);
+      localStorage.setItem('login', 'true');
+      localStorage.setItem('userName', res.data.fullName);
+      localStorage.setItem('userEmail', email);
 
-        setIsLoggedIn(true);
-        if (onAuthUpdate) onAuthUpdate();
+      setIsLoggedIn(true);
+      if (onAuthUpdate) onAuthUpdate();
 
-        setWorkshopForm(prev => ({
-            ...prev,
-            fullname: res.data.fullName,
-            email: email
-        }));
+      setWorkshopForm(prev => ({
+        ...prev,
+        fullname: res.data.fullName,
+        email: email
+      }));
 
-        closeModal_login();
+      closeModal_login();
 
-        setTimeout(() => { 
-             axios.get(`http://localhost:3000/api/check-registration/${email}`)
-                .then(apiRes => {
-                    if (!apiRes.data.registered) {
-                        localStorage.removeItem('WORKSHOP');
-                        openModal();
-                    } else {
-                        localStorage.setItem('WORKSHOP', 'true');
-                    }
-                })
-                .catch(() => openModal());
-        }, 500);
+      setTimeout(() => {
+        axios.get(`https://remet-ai-yudu.vercel.app/api/check-registration/${email}`)
+          .then(apiRes => {
+            if (!apiRes.data.registered) {
+              localStorage.removeItem('WORKSHOP');
+              openModal();
+            } else {
+              localStorage.setItem('WORKSHOP', 'true');
+            }
+          })
+          .catch(() => openModal());
+      }, 500);
 
     } catch (error) {
-        console.error("Login Error:", error);
-        alert("Email ou mot de passe incorrect");
+      console.error("Login Error:", error);
+      alert("Email ou mot de passe incorrect");
     }
   };
 
@@ -287,38 +290,38 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
-        alert("Erreur: ID utilisateur introuvable. Veuillez vous reconnecter.");
-        return;
+      alert("Erreur: ID utilisateur introuvable. Veuillez vous reconnecter.");
+      return;
     }
 
     const registrationData = {
-        fullName: workshopForm.fullname,
-        email: workshopForm.email,
-        institution: workshopForm.institution,
-        class: workshopForm.level,
-        phone: workshopForm.phone
+      fullName: workshopForm.fullname,
+      email: workshopForm.email,
+      institution: workshopForm.institution,
+      class: workshopForm.level,
+      phone: workshopForm.phone
     };
 
     const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
     };
 
     try {
-        await axios.post(`http://localhost:3000/api/registration/${userId}`, registrationData, config);
-        localStorage.setItem('login', 'true');
-        localStorage.setItem('WORKSHOP', 'true'); 
-        closeModal();
-        // Instead of alert, we can trigger the success modal directly if we wanted, 
-        // but the requirement says 'window reload' usually. We'll stick to alert then reload for safety.
-        alert("Inscription confirmée avec succès !");
-        window.location.reload();
+      await axios.post(`https://remet-ai-yudu.vercel.app/api/registration/${userId}`, registrationData, config);
+      localStorage.setItem('login', 'true');
+      localStorage.setItem('WORKSHOP', 'true');
+      closeModal();
+      // Instead of alert, we can trigger the success modal directly if we wanted, 
+      // but the requirement says 'window reload' usually. We'll stick to alert then reload for safety.
+      alert("Inscription confirmée avec succès !");
+      window.location.reload();
     } catch (error) {
-        console.error(error);
-        const errorMsg = error.response?.data?.message || "Erreur lors de l'inscription.";
-        alert(errorMsg);
+      console.error(error);
+      const errorMsg = error.response?.data?.message || "Erreur lors de l'inscription.";
+      alert(errorMsg);
     }
   };
 
@@ -333,23 +336,25 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     localStorage.removeItem('login');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
-    localStorage.removeItem('token'); 
-    localStorage.removeItem('userId'); 
-    localStorage.removeItem('WORKSHOP'); 
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('WORKSHOP');
 
     setIsLoggedIn(false);
     setWorkshopForm({ fullname: '', email: '', institution: '', level: '', phone: '' });
-    
+
     if (onAuthUpdate) onAuthUpdate();
     window.location.reload();
   };
 
   const toggleMenu = () => { setIsOpen(!isOpen); };
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({ ...prevState, [name]: value }));
   };
+
+
 
   return (
     <>
@@ -364,6 +369,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <li><a href="#speakers">SPEAKERS</a></li>
             <li><a href="#key-sessions">KEY SESSIONS</a></li>
             <li><a href="#program">PROGRAM</a></li>
+            <li><a       onClick={() => setShowAdminModal(true)} style={{cursor:"pointer"}}>Gestion de compte</a></li>
+
           </ul>
         </div>
 
@@ -433,57 +440,57 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
       {/* --- MODALE 4 : AUTH ALERT POPUP --- */}
       {showAuthAlert && (
-         <div className="rm-overlay" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>
-           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
-             <button className="rm-close-btn" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>×</button>
-             
-             <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🔒</div>
-             
-             <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Connexion Requise</h2>
-             <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
-               Pour vous inscrire à remetAI, vous devez d'abord vous connecter ou créer un compte.
-             </p>
+        <div className="rm-overlay" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>
+          <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
+            <button className="rm-close-btn" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>×</button>
 
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-                <button className="nav-register-btn" onClick={openModal_register} style={{ width: '100%', justifyContent: 'center' }}>
-                    S'inscrire
-                    <span className="btn-glow"></span>
-                </button>
-                
-                <button className="login-button" onClick={openModal_login} style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center' }}>
-                    Log in
-                </button>
-             </div>
-           </div>
-         </div>
+            <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🔒</div>
+
+            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Connexion Requise</h2>
+            <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
+              Pour vous inscrire à remetAI, vous devez d'abord vous connecter ou créer un compte.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+              <button className="nav-register-btn" onClick={openModal_register} style={{ width: '100%', justifyContent: 'center' }}>
+                S'inscrire
+                <span className="btn-glow"></span>
+              </button>
+
+              <button className="login-button" onClick={openModal_login} style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center' }}>
+                Log in
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* --- NEW MODALE 5 : ALREADY REGISTERED (SUCCESS) POPUP --- */}
       {showSuccessAlert && (
-         <div className="rm-overlay" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>
-           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
-             <button className="rm-close-btn" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>×</button>
-             
-             {/* Checkmark Icon */}
-             <div style={{ color: '#22c55e', fontSize: '4rem', marginBottom: '15px', display:'flex', justifyContent:'center' }}>
-                <FaCheckCircle />
-             </div>
-             
-             <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Félicitations !</h2>
-             <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
-               Vous êtes déjà inscrit au workshop REMET-AI.<br/>
-               Nous avons hâte de vous voir !
-             </p>
+        <div className="rm-overlay" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>
+          <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
+            <button className="rm-close-btn" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>×</button>
 
-             <button 
-                className="login-button" 
-                onClick={() => { setShowSuccessAlert(false); unlockScroll(); }} 
-                style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center', backgroundColor: '#0f172a', color: 'white' }}
-             >
-                Fermer
-             </button>
-           </div>
-         </div>
+            {/* Checkmark Icon */}
+            <div style={{ color: '#22c55e', fontSize: '4rem', marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
+              <FaCheckCircle />
+            </div>
+
+            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Félicitations !</h2>
+            <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
+              Vous êtes déjà inscrit au workshop REMET-AI.<br />
+              Nous avons hâte de vous voir !
+            </p>
+
+            <button
+              className="login-button"
+              onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}
+              style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center', backgroundColor: '#0f172a', color: 'white' }}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
       )}
 
       {/* --- MODALE 1 : WORKSHOP --- */}
@@ -501,17 +508,17 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 <label>Nom complet</label>
                 <input type="text" name="fullname" placeholder="Ex: Jean Dupont" value={workshopForm.fullname} onChange={handleWorkshopChange} required />
               </div>
-              
+
               <div className="rm-input-group">
                 <label>Email académique</label>
-                <input 
-                    type="email" 
-                    name="email" 
-                    value={workshopForm.email} 
-                    onChange={handleWorkshopChange} 
-                    required 
-                    readOnly 
-                    style={{ backgroundColor: '#e9ecef', cursor: 'not-allowed', color: '#6c757d' }}
+                <input
+                  type="email"
+                  name="email"
+                  value={workshopForm.email}
+                  onChange={handleWorkshopChange}
+                  required
+                  readOnly
+                  style={{ backgroundColor: '#e9ecef', cursor: 'not-allowed', color: '#6c757d' }}
                 />
               </div>
 
@@ -536,7 +543,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           </div>
         </div>
       )}
-      
+
       {/* --- MODALE 2 : REGISTER --- */}
       {showModal_register && (
         <div className="rm-overlay" onClick={closeModal_register}>
@@ -569,19 +576,19 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                     <h1 className="re-title">Créer un compte</h1>
                     <p className="re-subtitle">Rejoignez la communauté.</p>
                   </div>
-                  
+
                   <form className="re-form" onSubmit={handleRegisterSubmit}>
                     <div className="re-input-group">
                       <label>Nom complet</label>
                       <div className="re-input-wrapper">
-                        <input type="text" name="fullname" placeholder="Votre nom" value={formData.fullname} onChange={handleChange} required/>
+                        <input type="text" name="fullname" placeholder="Votre nom" value={formData.fullname} onChange={handleChange} required />
                         <span className="re-icon">👤</span>
                       </div>
                     </div>
                     <div className="re-input-group">
                       <label>Email professionnel</label>
                       <div className="re-input-wrapper">
-                        <input type="email" name="email" placeholder="nom@tech.com" value={formData.email} onChange={handleChange} required/>
+                        <input type="email" name="email" placeholder="nom@tech.com" value={formData.email} onChange={handleChange} required />
                         <span className="re-icon">✉️</span>
                       </div>
                     </div>
@@ -589,7 +596,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                       <div className="re-input-group">
                         <label>Mot de passe</label>
                         <div className="re-input-wrapper">
-                          <input type="password" name="password" placeholder="••••••" value={formData.password} onChange={handleChange} required/>
+                          <input type="password" name="password" placeholder="••••••" value={formData.password} onChange={handleChange} required />
                           <span className="re-icon">🔒</span>
                         </div>
                       </div>
@@ -598,7 +605,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                       <div className="re-input-group">
                         <label>Conform Mot de passe</label>
                         <div className="re-input-wrapper">
-                          <input type="password" name="confirmPassword" placeholder="••••••" value={formData.confirmPassword} onChange={handleChange} required/>
+                          <input type="password" name="confirmPassword" placeholder="••••••" value={formData.confirmPassword} onChange={handleChange} required />
                           <span className="re-icon">🔒</span>
                         </div>
                       </div>
@@ -651,7 +658,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                     <h1 className="lo-title">Bon retour !</h1>
                     <p className="lo-subtitle">Entrez vos identifiants.</p>
                   </div>
-                  
+
                   <form onSubmit={handleLoginSubmit} className="lo-form">
                     <div className="lo-input-group">
                       <label htmlFor="email">Email professionnel</label>
@@ -708,6 +715,10 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             </div>
           </div>
         </div>
+      )}
+
+      {showAdminModal && (
+          <Gestion_compte onClose={closeAdminModal} />
       )}
     </>
   );
