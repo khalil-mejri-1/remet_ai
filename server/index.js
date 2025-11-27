@@ -221,39 +221,40 @@ app.get('/api/sessions/:id/qrcode', async (req, res) => {
    Attendance / Scan QR
 ----------------------- */
 app.post('/api/attendance/scan', async (req, res) => {
-  try {
-    const { secretCode, userId } = req.body;
-    if (!secretCode || !userId) return res.status(400).json({ message: 'Code QR et userId requis' });
+    try {
+        const { secretCode, userId, fullName, email } = req.body;
 
-    const session = await Session.findOne({ secretCode });
-    if (!session) return res.status(404).json({ message: 'Session introuvable (QR Code invalide)' });
+        if (!secretCode || !userId || !fullName || !email) 
+            return res.status(400).json({ message: 'Tous les champs sont requis' });
 
-    const registration = await Registration.findOne({ userId });
+        // Find session by secret code (optional, can be null)
+        const session = await Session.findOne({ secretCode });
 
-    const attendanceObj = {
-      userId,
-      sessionId: session._id,
-      fullName: registration?.fullName || 'Inconnu',
-      email: registration?.email || 'N/A',
-      class: registration?.class || 'N/A'
-    };
+        const attendanceObj = {
+            userId,
+            sessionId: session ? session._id : null, // Send null if session not found
+            fullName,
+            email,
+            class: null, // or "0000" if you prefer
+        };
 
-    const attendance = await Attendance.create(attendanceObj);
+        const attendance = await Attendance.create(attendanceObj);
 
-    res.json({ 
-        success: true, 
-        message: 'Présence validée avec succès !', 
-        data: attendance 
-    });
+        res.json({ 
+            success: true, 
+            message: 'Présence validée avec succès !', 
+            data: attendance 
+        });
 
-  } catch (err) {
-    console.error("Scan Error:", err);
-    if (err.code === 11000) {
-        return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
+    } catch (err) {
+        console.error("Scan Error:", err);
+        if (err.code === 11000) {
+            return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
+        }
+        res.status(500).json({ message: 'Erreur serveur', error: err.message });
     }
-    res.status(500).json({ message: 'Erreur serveur', error: err.message });
-  }
 });
+
 
 /* -----------------------
    Health Check & Errors
