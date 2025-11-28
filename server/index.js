@@ -559,6 +559,26 @@ app.get('/admin/users', async (req, res) => {
     }
 });
 
+app.get('/api/user/role/:email', async (req, res) => {
+    try {
+        const userEmail = req.params.email;
+        // Recherche de l'utilisateur par email
+        const user = await User.findOne({ email: userEmail });
+
+        if (!user) {
+            // Si l'utilisateur n'est pas trouvé, on suppose qu'il n'est pas admin
+            return res.json({ role: 'student' }); 
+        }
+
+        // Répondre avec le rôle de l'utilisateur
+        res.json({ role: user.role }); 
+
+    } catch (error) {
+        console.error("Erreur de récupération de rôle:", error);
+        // En cas d'erreur serveur, on renvoie un rôle par défaut non-admin
+        res.status(500).json({ role: 'student' }); 
+    }
+});
 
 
 app.put('/admin/users/:id/role', async (req, res) => {

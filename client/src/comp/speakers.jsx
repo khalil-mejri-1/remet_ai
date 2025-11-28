@@ -8,18 +8,21 @@ const PlusIcon = () => (
     <line x1="5" y1="12" x2="19" y2="12"></line>
   </svg>
 );
+
 const EditIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
   </svg>
 );
+
 const TrashIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="3 6 5 6 21 6"></polyline>
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
   </svg>
 );
+
 const XIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -29,9 +32,12 @@ const XIcon = () => (
 
 // ===== URL BASE API =====
 const API_URL = "http://localhost:3000/api/speakers";
+// نقطة نهاية للتحقق من دور المستخدم (مسار أساسي)
+const USER_ROLE_CHECK_URL = "http://localhost:3000/api/user/role";
+
 
 // ===== Speaker Card Component =====
-const SpeakerCard = ({ speaker, onUpdate, onDelete }) => {
+const SpeakerCard = ({ speaker, onUpdate, onDelete, isAdmin }) => {
   const titleClass = speaker.expertType === "expert" ? "expert-title" : "ia-title";
 
   return (
@@ -46,23 +52,28 @@ const SpeakerCard = ({ speaker, onUpdate, onDelete }) => {
         <p className="speaker-description">{speaker.description}</p>
       </div>
 
-      <div className="sp-card-actions">
-        <button className="sp-action-btn update" onClick={() => onUpdate(speaker)}>
-          <EditIcon /> Update
-        </button>
-        <button className="sp-action-btn delete" onClick={() => onDelete(speaker._id)}>
-          <TrashIcon /> Delete
-        </button>
-      </div>
+      {/* عرض الأزرار فقط إذا كان isAdmin صحيحًا */}
+      {isAdmin && (
+        <div className="sp-card-actions">
+          <button className="sp-action-btn update" onClick={() => onUpdate(speaker)}>
+            <EditIcon /> Update
+          </button>
+          <button className="sp-action-btn delete" onClick={() => onDelete(speaker._id)}>
+            <TrashIcon /> Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-// ===== Main Component =====
+// ===== Main Component (Speakers) =====
 export default function Speakers() {
   const [speakers, setSpeakers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
+  // حالة جديدة لتخزين ما إذا كان المستخدم مسؤولاً (admin)
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // --- GET ALL SPEAKERS ---
   const fetchSpeakers = async () => {
@@ -74,12 +85,44 @@ export default function Speakers() {
     }
   };
 
+  // --- CHECK USER ROLE ---
+  const checkUserRole = async () => {
+    // 1. قراءة البريد الإلكتروني من localStorage
+    const userEmail = localStorage.getItem("userEmail");
+
+    if (userEmail) {
+      try {
+        // 2. التعديل الضروري: إرسال البريد الإلكتروني كـ Path Parameter
+        const res = await axios.get(`${USER_ROLE_CHECK_URL}/${userEmail}`);
+
+        // 3. التحقق من الدور
+        if (res.data && res.data.role === "admin") {
+          setIsAdmin(true); // تعيين isAdmin إلى true إذا كان الدور admin
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (err) {
+        console.error("Error checking user role:", err);
+        setIsAdmin(false); // الافتراض هو عدم الإدارة في حالة وجود خطأ
+      }
+    } else {
+      setIsAdmin(false);
+    }
+  };
+
+
   useEffect(() => {
     fetchSpeakers();
-  }, []);
+    checkUserRole(); // استدعاء دالة التحقق من دور المستخدم عند تحميل المكون
+  }, []); // تشغيل مرة واحدة عند التحميل
 
   // --- DELETE SPEAKER ---
   const handleDelete = async (id) => {
+    if (!isAdmin) {
+      alert("Vous n'êtes pas autorisé à effectuer cette action."); // حماية إضافية في الواجهة
+      return;
+    }
+
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce speaker ?")) {
       try {
         await axios.delete(`${API_URL}/${id}`);
@@ -92,11 +135,13 @@ export default function Speakers() {
 
   // --- ADD / UPDATE SPEAKER MODAL ---
   const handleAddClick = () => {
+    if (!isAdmin) return; // منع الفتح إذا لم يكن مسؤولاً
     setCurrentSpeaker({ name: "", title: "", description: "", expertType: "ia", image: "" });
     setIsModalOpen(true);
   };
 
   const handleUpdateClick = (speaker) => {
+    if (!isAdmin) return; // منع الفتح إذا لم يكن مسؤولاً
     setCurrentSpeaker({ ...speaker });
     setIsModalOpen(true);
   };
@@ -108,6 +153,8 @@ export default function Speakers() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!isAdmin) return; // منع الحفظ إذا لم يكن مسؤولاً
+
     try {
       if (currentSpeaker._id) {
         // Update
@@ -129,22 +176,33 @@ export default function Speakers() {
     <section className="speakers-section">
       <div className="speakers-header-wrapper">
         <h2 className="section-title">Speakers</h2>
-        <button className="sp-add-btn" onClick={handleAddClick}>
-          <PlusIcon /> Add Speaker
-        </button>
+
+        {/* عرض زر Add Speaker فقط إذا كان isAdmin صحيحًا */}
+        {isAdmin && (
+          <button className="sp-add-btn" onClick={handleAddClick}>
+            <PlusIcon /> Add Speaker
+          </button>
+        )}
       </div>
 
       <div className="speakers-grid">
         {speakers.map((speaker) => (
-          <SpeakerCard key={speaker._id} speaker={speaker} onUpdate={handleUpdateClick} onDelete={handleDelete} />
+          <SpeakerCard
+            key={speaker._id}
+            speaker={speaker}
+            onUpdate={handleUpdateClick}
+            onDelete={handleDelete}
+            isAdmin={isAdmin} // تمرير حالة isAdmin إلى المكون الفرعي
+          />
         ))}
+
       </div>
 
-      {isModalOpen && currentSpeaker && (
+      {isModalOpen && currentSpeaker && isAdmin && ( // فتح المودال فقط إذا كان isAdmin صحيحًا
         <div className="sp-modal-overlay">
           <div className="sp-modal-content">
             <div className="sp-modal-header">
-              <h3>{currentSpeaker._id ? "Modifier Speaker" : "Ajouter Speaker"}</h3>
+              <h3>{currentSpeaker._id ? "Edit Speaker" : "Add Speaker"}</h3>
               <button className="sp-close-btn" onClick={() => setIsModalOpen(false)}>
                 <XIcon />
               </button>
@@ -152,17 +210,17 @@ export default function Speakers() {
 
             <form onSubmit={handleSave} className="sp-modal-form">
               <div className="sp-form-group">
-                <label>Nom complet</label>
+                <label>Full Name</label>
                 <input type="text" name="name" value={currentSpeaker.name} onChange={handleModalChange} required />
               </div>
 
               <div className="sp-form-group">
-                <label>Titre</label>
+                <label>Title</label>
                 <input type="text" name="title" value={currentSpeaker.title} onChange={handleModalChange} required />
               </div>
 
               <div className="sp-form-group">
-                <label>Type d'expert</label>
+                <label>Expert Type</label>
                 <select name="expertType" value={currentSpeaker.expertType} onChange={handleModalChange}>
                   <option value="ia">IA (Bleu)</option>
                   <option value="expert">Expert (Vert)</option>
@@ -170,7 +228,7 @@ export default function Speakers() {
               </div>
 
               <div className="sp-form-group">
-                <label>URL de l'image (Optionnel)</label>
+                <label>Image URL (Optional)</label>
                 <input type="text" name="image" value={currentSpeaker.image || ""} onChange={handleModalChange} placeholder="https://..." />
               </div>
 
@@ -180,35 +238,33 @@ export default function Speakers() {
               </div>
 
               <div className="sp-modal-actions">
-                <button type="button" onClick={() => setIsModalOpen(false)}>Annuler</button>
-                <button type="submit">Enregistrer</button>
+                <button type="button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit">Save</button>
               </div>
             </form>
           </div>
         </div>
       )}
- 
-
 
       {/* --- STYLES ADDITIONNELS --- */}
       <style>{`
-        /* 1. Assurer que toutes les cartes ont la même hauteur et alignement */
+        /* 1. Assurer أن جميع البطاقات لها نفس الارتفاع والمحاذاة */
         .speaker-card {
             display: flex;
             flex-direction: column;
-            height: 100%; /* Occupe toute la hauteur de la grille */
+            height: 100%; /* تأخذ كامل ارتفاع الشبكة */
         }
 
-        /* 2. Gestion de l'image réelle dans le placeholder */
+        /* 2. إدارة الصورة الحقيقية في الحاوية المؤقتة */
         .speaker-real-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: inherit; /* Garde l'arrondi du parent */
+            border-radius: inherit; /* تحافظ على حواف الوالد المستديرة */
             display: block;
         }
 
-        /* 3. Centrage header */
+        /* 3. توسيط الرأس */
         .speakers-header-wrapper {
             display: flex;
             flex-direction: column;
@@ -217,7 +273,7 @@ export default function Speakers() {
             text-align: center;
         }
 
-        /* 4. Bouton Add Stylisé */
+        /* 4. زر Add Stylisé */
         .sp-add-btn {
             margin-top: 15px;
             background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
@@ -235,9 +291,9 @@ export default function Speakers() {
         }
         .sp-add-btn:hover { transform: scale(1.05); }
 
-        /* 5. Boutons Actions (Update/Delete) toujours en bas */
+        /* 5. أزرار الإجراءات (Update/Delete) دائمًا في الأسفل */
         .sp-card-actions {
-            margin-top: auto; /* C'est cette ligne qui pousse les boutons vers le bas */
+            margin-top: auto; /* هذا السطر يدفع الأزرار إلى الأسفل */
             padding-top: 15px;
             border-top: 1px solid rgba(255,255,255,0.1);
             display: flex;
@@ -255,7 +311,7 @@ export default function Speakers() {
             align-items: center;
             gap: 5px;
             background: rgba(255,255,255,0.05);
-            color: #ccc;
+            color: #000000ff;
             transition: all 0.2s;
         }
         .sp-action-btn.update:hover { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
@@ -276,15 +332,17 @@ export default function Speakers() {
         .sp-close-btn { background: none; border: none; color: #aaa; cursor: pointer; }
         .sp-close-btn:hover { color: white; }
         .sp-form-group { margin-bottom: 12px; text-align: left; }
-        .sp-form-group label { display: block; margin-bottom: 5px; color: #ccc; font-size: 0.9rem; }
+        .sp-form-group label { display: block; margin-bottom: 5px; color: #ffffffff; font-size: 0.9rem; }
         .sp-form-group input, .sp-form-group textarea, .sp-select {
             width: 100%; padding: 8px; background: rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
             color: white; outline: none; font-family: inherit;
         }
-        .sp-modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .sp-save-btn { flex: 1; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
-        .sp-cancel-btn { flex: 1; background: transparent; border: 1px solid #555; color: #ccc; padding: 10px; border-radius: 6px; cursor: pointer; }
+        .sp-modal-actions { display: flex; gap: 10px; margin-top: 20px; color:white}
+        .sp-modal-actions button[type="submit"] { flex: 1; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .sp-modal-actions button[type="submit"]:hover { background: #4f46e5; }
+        .sp-modal-actions button[type="button"] { flex: 1; background: transparent; border: 1px solid #555; color: #ffffffff; padding: 10px; border-radius: 6px; cursor: pointer; transition: border-color 0.2s; }
+        .sp-modal-actions button[type="button"]:hover { border-color: #999; color: white; }
       `}</style>
     </section>
   );

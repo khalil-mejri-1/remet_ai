@@ -101,7 +101,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
       if (isAuth && savedEmail) {
         try {
-          const response = await axios.get(`https://remet-ai-yudu.vercel.app/api/check-registration/${savedEmail}`);
+          const response = await axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${savedEmail}`);
 
           if (response.data.registered) {
             localStorage.setItem('WORKSHOP', 'true');
@@ -136,7 +136,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         const userData = userInfo.data;
 
         try {
-          const res = await axios.post('https://remet-ai-yudu.vercel.app/api/google-login', {
+          const res = await axios.post('https://remet-ai-nate.vercel.app/api/google-login', {
             fullName: userData.name,
             email: userData.email
           });
@@ -166,7 +166,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         closeModal_register();
 
         setTimeout(() => {
-          axios.get(`https://remet-ai-yudu.vercel.app/api/check-registration/${userData.email}`)
+          axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${userData.email}`)
             .then(res => {
               if (!res.data.registered) {
                 localStorage.removeItem('WORKSHOP');
@@ -196,7 +196,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     }
 
     try {
-      const res = await axios.post('https://remet-ai-yudu.vercel.app/api/register', {
+      const res = await axios.post('https://remet-ai-nate.vercel.app/api/register', {
         fullName: formData.fullname,
         email: formData.email,
         password: formData.password
@@ -237,7 +237,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('https://remet-ai-yudu.vercel.app/api/login', {
+      const res = await axios.post('https://remet-ai-nate.vercel.app/api/login', {
         email: email,
         password: password
       });
@@ -262,7 +262,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       closeModal_login();
 
       setTimeout(() => {
-        axios.get(`https://remet-ai-yudu.vercel.app/api/check-registration/${email}`)
+        axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${email}`)
           .then(apiRes => {
             if (!apiRes.data.registered) {
               localStorage.removeItem('WORKSHOP');
@@ -310,7 +310,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     };
 
     try {
-      await axios.post(`https://remet-ai-yudu.vercel.app/api/registration/${userId}`, registrationData, config);
+      await axios.post(`https://remet-ai-nate.vercel.app/api/registration/${userId}`, registrationData, config);
       localStorage.setItem('login', 'true');
       localStorage.setItem('WORKSHOP', 'true');
       closeModal();
@@ -476,18 +476,18 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
               <FaCheckCircle />
             </div>
 
-            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Félicitations !</h2>
+            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Congratulations !</h2>
             <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
-              Vous êtes déjà inscrit au workshop REMET-AI.<br />
-              Nous avons hâte de vous voir !
+              You are already registered for the REMET-AI workshop.<br />
+             We look forward to seeing you!
             </p>
 
             <button
               className="login-button"
               onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}
-              style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center', backgroundColor: '#0f172a', color: 'white' }}
+              style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center', backgroundColor: '#0f172a', color: 'black' }}
             >
-              Fermer
+              Close
             </button>
           </div>
         </div>
