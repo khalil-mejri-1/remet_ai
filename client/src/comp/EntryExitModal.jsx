@@ -17,11 +17,11 @@ const EntryExitModal = ({ isOpen, onClose, onSelectScan, EnterIcon, ExitIcon, XI
                     <button onClick={onClose} className="prog-close-btn"><XIcon /></button>
                 </div>
                 
-                <p>Please choose your action for attendance.</p>
+                <p style={{textAlign:"center"}}>Please choose your action for attendance.</p>
 
-                <div className="entry-exit-actions" style={{display:"flex",gap:"5px",border:"red solid 0px",width:"300px",margin:"auto"}}>
+                <div className="entry-exit-action">
                     <button 
-                        className="ks-add-btn"
+                        className="prog-bt entry-btn"
                         // Au clic, il ouvre le scanner avec le type 'entry'
                         onClick={() => onSelectScan('entry')} 
                     >
@@ -30,7 +30,7 @@ const EntryExitModal = ({ isOpen, onClose, onSelectScan, EnterIcon, ExitIcon, XI
                     </button>
                     
                     <button 
-                        className="ks-add-btn"
+                        className="prog-bt entry-btn"
                         // Au clic, il ouvre le scanner avec le type 'exit'
                         onClick={() => onSelectScan('exit')} 
                     >

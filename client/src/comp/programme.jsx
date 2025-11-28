@@ -18,41 +18,62 @@ const ExitIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="non
 
 // NOUVEAU Composant Modal de sélection pour l'Admin (Entrée/Sortie Generation)
 const AdminQRSelectionModal = ({ isOpen, onClose, onSelectScan, EnterIcon, ExitIcon, XIcon }) => {
-    if (!isOpen) return null;
+    if (!isOpen) return null;
 
-    return (
-        <div className="prog-modal-overlay">
-            <div className="prog-modal-content entry-exit-modal-content">
-                <div className="prog-modal-header">
-                    <h3>Create QR Code for Entry/Exit</h3>
-                    <button onClick={onClose} className="prog-close-btn"><XIcon /></button>
-                </div>
-                <div className="entry-exit-options">
-                    <button 
-                        className="prog-btn entry-btn" 
-                        onClick={() => { onSelectScan('entry'); onClose(); }}
-                    >
-                        <EnterIcon /> Entrer (Générer QR)
-                    </button>
-                    <button 
-                        className="prog-btn exit-btn" 
-                        onClick={() => { onSelectScan('exit'); onClose(); }}
-                    >
-                        <ExitIcon /> Sortie (Générer QR)
-                    </button>
-                </div>
-            </div>
-            <style jsx>{`
-                .entry-exit-modal-content { max-width: 300px; text-align: center; }
-                .entry-exit-options { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-                .entry-btn { background-color: #10b981; color: white; }
-                .exit-btn { background-color: #f59e0b; color: white; }
-                /* Styles hérités pour le modal */
-                .prog-modal-content { background: #1f1f2e; }
-            `}</style>
-        </div>
-    );
+    return (
+        <div className="prog-modal-overlay">
+            <div className="prog-modal-content entry-exit-modal-content">
+                <div className="prog-modal-header">
+                    <h3>Create QR Code for Entry/Exit</h3>
+                    <button onClick={onClose} className="prog-close-btn"><XIcon /></button>
+                </div>
+                <div className="entry-exit-options">
+                    <button 
+                        className="prog-bt entry-btn" 
+                        onClick={() => { onSelectScan('entry'); onClose(); }}
+                    >
+                        <EnterIcon /> Entrer (Générer QR)
+                    </button>
+                    <button 
+                        className="prog-bt exit-btn" 
+                        onClick={() => { onSelectScan('exit'); onClose(); }}
+                    >
+                        <ExitIcon /> Sortie (Générer QR)
+                    </button>
+                </div>
+            </div>
+       
+        </div>
+    );
 };
+
+
+// ===== SKELETON COMPONENTS FOR LOADING STATE =====
+
+// Skeleton for Day Tabs
+const DayTabsSkeleton = () => (
+  <div className="day-tabs-container day-tabs-skeleton">
+    {Array.from({ length: 3 }).map((_, index) => (
+      <div key={index} className="day-tab-button prog-skeleton-effect" style={{ width: `${60 + Math.random() * 40}px`, height: '36px' }}></div>
+    ))}
+  </div>
+);
+
+// Skeleton for a Programme Item
+const ProgrammeItemSkeleton = () => (
+  <div className="programme-item prog-skeleton-effect">
+    <div className="time-marker prog-skeleton-icon"></div>
+    <div className="programme-content">
+      <span className="item-time prog-skeleton-line" style={{ width: '40%' }}></span>
+      <div style={{ display: "flex" }}>
+        <h3 className="item-title prog-skeleton-line" style={{ width: '70%', height: '24px', marginTop: '8px' }}></h3>
+      </div>
+      <p className="item-led-by prog-skeleton-line" style={{ width: '50%', height: '16px', marginTop: '10px' }}></p>
+    </div>
+  </div>
+);
+
+// ==================================================
 
 
 export default function Programme() {
@@ -73,9 +94,11 @@ export default function Programme() {
   const [isAdminScanTypeModalOpen, setIsAdminScanTypeModalOpen] = useState(false); // 👈 NOUVEL ÉTAT pour la sélection Admin
   const [currentAdminQRType, setCurrentAdminQRType] = useState('entry'); // 'entry' ou 'exit'
   // --------------------------------------------------
-const qrCodeRef = React.useRef(null);
+  const qrCodeRef = React.useRef(null);
   // --- NOUVEAU : État Admin ---
   const [isAdmin, setIsAdmin] = useState(false);
+  // --- NOUVEAU : État de Chargement ---
+  const [isLoading, setIsLoading] = useState(true);
 
   const [showPresenceBtn, setShowPresenceBtn] = useState(false);
   // MIS À JOUR : Nouveau modal de sélection
@@ -115,30 +138,27 @@ const qrCodeRef = React.useRef(null);
   // --- MISE À JOUR : Vérification du statut Admin (Utilise le nouvel endpoint GET) ---
   const checkAdminStatus = async () => {
     const userEmail = localStorage.getItem('userEmail');
+    let adminStatus = false;
     if (!userEmail) {
       setIsAdmin(false);
-      return;
+      return false;
     }
 
-    // Encoder l'email pour l'URL
     const encodedEmail = encodeURIComponent(userEmail);
 
     try {
-      // UTILISATION DU NOUVEL ENDPOINT GET
-      const res = await fetch(`http://localhost:3000/api/user/role/${encodedEmail}`, {
+      const res = await fetch(`https://remet-ai-sbf9.vercel.app/api/user/role/${encodedEmail}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Vous pourriez ajouter l'Authorization Bearer Token ici si nécessaire pour les routes protégées
         },
       });
 
       if (res.ok) {
         const data = await res.json();
-        // Le backend retourne { role: 'admin' } ou { role: 'student' }
-        setIsAdmin(data.role === 'admin');
+        adminStatus = data.role === 'admin';
+        setIsAdmin(adminStatus);
       } else {
-        // En cas d'erreur ou si l'utilisateur n'est pas trouvé
         console.error("Erreur HTTP lors de la vérification du rôle:", res.status);
         setIsAdmin(false);
       }
@@ -146,13 +166,37 @@ const qrCodeRef = React.useRef(null);
       console.error("Erreur lors de la vérification du rôle admin:", error);
       setIsAdmin(false);
     }
+    return adminStatus;
   };
   // --- FIN MISE À JOUR CHECK ADMIN ---
 
+  // Fetch data from backend
+  const fetchData = async () => {
+    try {
+      const res = await fetch('https://remet-ai-sbf9.vercel.app/api/program');
+      const programs = await res.json();
+      const formatted = {};
+      programs.forEach(p => formatted[p.day] = p.sessions);
+      setData(formatted);
+      if (programs.length > 0) setActiveDay(programs[0].day);
+    } catch (error) {
+      console.error("Error fetching program data:", error);
+    }
+  };
+
   useEffect(() => {
-    checkAuthStatus();
-    checkAdminStatus(); // Appel de la nouvelle fonction
+    const initialLoad = async () => {
+      setIsLoading(true);
+      checkAuthStatus();
+      await Promise.all([
+        fetchData(),
+        checkAdminStatus(),
+      ]);
+      setIsLoading(false);
+    };
+    initialLoad();
   }, []);
+
 
   // --- MISE À JOUR : QR Scanner Logic (maintenant avec scanType) ---
   const sendAttendance = async (scannedValue, scanType) => { // 👈 Ajout de scanType
@@ -167,7 +211,7 @@ const qrCodeRef = React.useRef(null);
     }
 
     try {
-      const res = await fetch("https://remet-ai-nate.vercel.app/api/attendance/scan", {
+      const res = await fetch("https://remet-ai-sbf9.vercel.app/api/attendance/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -252,11 +296,6 @@ const qrCodeRef = React.useRef(null);
     setQrCodeData(qrValue);
     setIsAdminScanTypeModalOpen(false); // Ferme le modal de sélection
     setIsQRCodeModalOpen(true); // Ouvre le modal d'affichage du QR Code
-    // Pas besoin de lockScroll ici car le modal de sélection l'a déjà fait,
-    // mais si vous souhaitez fermer un autre modal avant, c'est mieux:
-    // unlockScroll(); // Laissera l'overlay de l'autre modal si non fermé. 
-    // On laisse le closeModal du Modal de sélection le faire, ou on le fait ici.
-    // Laissez le `AdminQRSelectionModal` s'occuper du `unlockScroll`
   };
 
   // 3. Ferme le modal d'affichage du QR code généré
@@ -267,26 +306,12 @@ const qrCodeRef = React.useRef(null);
   // --- FIN LOGIQUE GÉNÉRATION QR ADMIN ---
 
 
-  // Fetch data from backend
-  const fetchData = async () => {
-    const res = await fetch('https://remet-ai-nate.vercel.app/api/program');
-    const programs = await res.json();
-    const formatted = {};
-    programs.forEach(p => formatted[p.day] = p.sessions);
-    setData(formatted);
-    if (programs.length > 0) setActiveDay(programs[0].day);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   // CRUD Handlers (Add, Remove, Update)
   const handleAddDay = async (e) => {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!newDayName) return;
-    const res = await fetch('https://remet-ai-nate.vercel.app/api/program', {
+    const res = await fetch('https://remet-ai-sbf9.vercel.app/api/program', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ day: newDayName })
@@ -302,7 +327,7 @@ const qrCodeRef = React.useRef(null);
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!dayToRemove) return;
-    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
+    const res = await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
     if (res.ok) {
       fetchData();
       setIsRemoveDayModalOpen(false);
@@ -314,7 +339,7 @@ const qrCodeRef = React.useRef(null);
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     const updatedSessions = [...(data[activeDay] || []), newSession];
-    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+    const res = await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessions: updatedSessions })
@@ -335,7 +360,7 @@ const qrCodeRef = React.useRef(null);
         sess.id === currentItem.id ? currentItem : sess
       );
 
-      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
@@ -354,7 +379,7 @@ const qrCodeRef = React.useRef(null);
     if (!isAdmin) return; // Sécurité côté client
     if (window.confirm("Supprimer cet élément du programme ?")) {
       const updatedSessions = data[activeDay].filter(item => item.id !== itemId);
-      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
@@ -413,60 +438,11 @@ const qrCodeRef = React.useRef(null);
     }
   };
 
-  // NOUVEAU: handleShowQRCode remplacé par la nouvelle logique `openAdminQRSelection`
-
-  return (
-    <section className="programme-section">
-      {/* Header avec Actions Jours */}
-      <div className="prog-header-wrapper">
-        <h2 className="programme-title"> Conference Agenda</h2>
-
-        {/* --- ACTIONS ADMIN (CONDITIONNEL) --- */}
-        {isAdmin && (
-          <div className="prog-day-actions">
-            {/* Bouton Add Day */}
-            <button className="prog-btn add-day" onClick={() => setIsAddDayModalOpen(true)}>
-              <PlusIcon /> Add Day
-            </button>
-
-            {/* Bouton Add Session */}
-            {days.length > 0 && (
-              <button className="prog-btn add-session" onClick={() => setIsAddSessionModalOpen(true)}>
-                <ClockIcon /> Add Session
-              </button>
-            )}
-
-            {/* Bouton Remove Day */}
-            {days.length > 0 && (
-              <button className="prog-btn remove-day" onClick={() => setIsRemoveDayModalOpen(true)}>
-                <MinusIcon /> Remove Day
-              </button>
-            )}
-            
-            {/* Bouton pour ouvrir la sélection de QR Code Admin (Génération) */}
-           
-          </div>
-        )}
-        {/* --- FIN ACTIONS ADMIN --- */}
-
-      </div>
-
-      {/* Onglets des Jours */}
-      <div className="day-tabs-container">
-        {days.map((day) => (
-          <button
-            key={day}
-            className={`day-tab-button ${activeDay === day ? 'active' : ''}`}
-            onClick={() => setActiveDay(day)}
-          >
-            {day}
-          </button>
-        ))}
-      </div>
-
-      {/* Timeline */}
-      <div className="timeline-container">
-        {programmeData.length > 0 ? programmeData.map((item) => (
+  // Déterminer le contenu à afficher: Skeletons ou Données
+  const content = isLoading
+    ? Array.from({ length: 5 }).map((_, index) => <ProgrammeItemSkeleton key={index} />)
+    : programmeData.length > 0
+      ? programmeData.map((item) => (
           <div key={item.id} className={`programme-item ${item.type}`}>
 
             <div className="time-marker">
@@ -499,8 +475,6 @@ const qrCodeRef = React.useRef(null);
                     <button className="prog-action-btn delete" onClick={() => handleDeleteItem(item.id)}>
                       <TrashIcon /> Remove
                     </button>
-                  
-                    {/* Bouton Generate QR retiré d'ici et mis en haut pour être global (voir section prog-day-actions) */}
                   </>
                 )}
 
@@ -508,19 +482,72 @@ const qrCodeRef = React.useRef(null);
                 <button className="prog-btn add-day scan_qr" style={{}} onClick={openScanner}>
                   <QRIcon /> Scan QR Code
                 </button>
-
- <button className="prog-btn add-day scan_qr" onClick={openAdminQRSelection}>
-              <QRIcon /> Generate QR
-            </button>
-
+                {/* Bouton Generate QR Code (Appelle openAdminQRSelection) */}
+                {isAdmin && (
+                  <button className="prog-btn add-day scan_qr" onClick={openAdminQRSelection}>
+                    <QRIcon /> Generate QR
+                  </button>
+                )}
               </div>
 
             </div>
 
           </div>
-        )) : (
-          <div className="no-data-msg">Aucun programme pour ce jour.</div>
+        ))
+      : <div className="no-data-msg">Aucun programme pour ce jour.</div>;
+
+
+  return (
+    <section className="programme-section">
+      {/* Header avec Actions Jours */}
+      <div className="prog-header-wrapper">
+        <h2 className="programme-title"> Conference Agenda</h2>
+
+        {/* --- ACTIONS ADMIN (CONDITIONNEL) --- */}
+        {isAdmin && !isLoading && (
+          <div className="prog-day-actions">
+            {/* Bouton Add Day */}
+            <button className="prog-btn add-day" onClick={() => setIsAddDayModalOpen(true)}>
+              <PlusIcon /> Add Day
+            </button>
+
+            {/* Bouton Add Session */}
+            {days.length > 0 && (
+              <button className="prog-btn add-session" onClick={() => setIsAddSessionModalOpen(true)}>
+                <ClockIcon /> Add Session
+              </button>
+            )}
+
+            {/* Bouton Remove Day */}
+            {days.length > 0 && (
+              <button className="prog-btn remove-day" onClick={() => setIsRemoveDayModalOpen(true)}>
+                <MinusIcon /> Remove Day
+              </button>
+            )}
+          </div>
         )}
+        {/* --- FIN ACTIONS ADMIN --- */}
+
+      </div>
+
+      {/* Onglets des Jours */}
+      {isLoading ? <DayTabsSkeleton /> : (
+        <div className="day-tabs-container">
+          {days.map((day) => (
+            <button
+              key={day}
+              className={`day-tab-button ${activeDay === day ? 'active' : ''}`}
+              onClick={() => setActiveDay(day)}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Timeline */}
+      <div className="timeline-container">
+        {content}
       </div>
 
       {/* --- MODAL ADD DAY (CONDITIONNEL) --- */}
@@ -612,7 +639,7 @@ const qrCodeRef = React.useRef(null);
                 <button type="submit" className="prog-delete-confirm-btn">Permanently Delete</button>
               </div>
             </form>
-          </div>
+            </div>
         </div>
       )}
 
@@ -636,7 +663,7 @@ const qrCodeRef = React.useRef(null);
                 />
               </div>
               <div className="prog-form-group">
-                <label>Title  </label>
+                <label>Title  </label>
                 <input
                   type="text"
                   name="title"
@@ -698,8 +725,8 @@ const qrCodeRef = React.useRef(null);
             </div>
             {/* MISE À JOUR DU BOUTON POUR APPELER handleDownloadQR */}
             <button className='prog-btn add-day' onClick={handleDownloadQR} style={{ margin: "auto" }}>
-                Download QR Code
-            </button>
+                Download QR Code
+            </button>
           </div>
         </div>
       )}
@@ -730,71 +757,379 @@ const qrCodeRef = React.useRef(null);
 
       {/* STYLES CSS (Ajout des styles pour le nouveau modal) */}
 
-          <style>{`
+          <style>{`
+
+      .prog-header-wrapper {
+
+          display: flex;
+
+          flex-direction: column;
+
+          align-items: center;
+
+          margin-bottom: 30px;
+
+      }
+
+      .prog-day-actions {
+
+          display: flex;
+
+          gap: 15px;
+
+          margin-top: 15px;
+
+          flex-wrap: wrap;
+
+          justify-content: center;
+
+      }
+
+      .prog-btn {
+
+          display: flex; align-items: center; gap: 8px;
+
+          padding: 8px 16px; border-radius: 20px; border: none;
+
+          cursor: pointer; font-weight: 600; font-size: 0.9rem;
+
+          transition: transform 0.2s;
+
+      }
+
+      .prog-btn:hover { transform: scale(1.05); }
+
+     
+
+      .prog-btn.add-day { background: #6366f1; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+
+     
+
+      /* Style distinct pour le bouton Add Session */
+
+      .prog-btn.add-session {
+
+          background: #10b981; /* Vert émeraude */
+
+          color: white;
+
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+
+      }
+
+
+
+      .prog-btn.remove-day { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+      .prog-btn.remove-day:hover { background: rgba(239, 68, 68, 0.2); color: white; }
+
+
+
+      /* Actions Item (Update/Remove) */
+
+
+
+ 
+
+      .prog-action-btn.update:hover { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+
+      .prog-action-btn.delete:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+
+
+      /* Modal Styles */
+
+      .prog-modal-overlay {
+
+          position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+
+          background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
+
+          z-index: 9999; display: flex; justify-content: center; align-items: center;
+
+      }
+
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+
+      .prog-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+      .prog-close-btn { background: none; border: none; color: #aaa; cursor: pointer; }
+
+      .prog-close-btn:hover { color: white; }
+
+     
+
+      .prog-form-group { margin-bottom: 15px; text-align: left; }
+
+      .prog-form-group label { display: block; margin-bottom: 6px; color: #ffffffff; font-size: 0.9rem; }
+
+      .prog-form-group input, .prog-select {
+
+          width: 100%; padding: 10px; background: rgba(0,0,0,0.3);
+
+          border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+
+          color: white; outline: none; font-family: inherit;
+
+      }
+
+      .prog-select option { background: #1f1f2e; color: white; }
+
+
+
+      .prog-modal-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+     
+
+      .prog-save-btn { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+
+      .prog-save-btn.add-session-btn { background: #10b981; } /* Bouton vert pour l'ajout */
+
+
+
+      .prog-delete-confirm-btn { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+
+
+
+      .no-data-msg { text-align: center; color: #aaa; padding: 40px; font-style: italic; }
+
+      
+      /* ================================================= */
+      /* ========== SKELETON LOADING STYLES (CHIK) ========== */
+      /* ================================================= */
+
+      @keyframes shimmer {
+        100% {
+          transform: translateX(100%);
+        }
+      }
+      
+      /* Base pour tous les éléments de squelette */
+      .prog-skeleton-effect {
+        position: relative;
+        overflow: hidden;
+        background-color: rgba(255, 255, 255, 0.08); /* Fond plus sombre pour le mode dark */
+        border-radius: 8px;
+      }
+      
+      /* L'effet de brillance */
+      .prog-skeleton-effect::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-100%);
+        /* L'effet de gradient est subtil et blanc/gris clair */
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+        animation: shimmer 1.5s infinite;
+      }
+
+      /* Styles spécifiques aux onglets */
+      .day-tabs-skeleton {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        padding: 10px 0;
+      }
+      .day-tabs-skeleton .day-tab-button {
+        min-width: 60px;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Styles spécifiques à un élément de la timeline */
+      .programme-item {
+        position: relative;
+        padding-left: 60px; /* Espace pour le marqueur temporel/icône */
+        margin-bottom: 25px;
+      }
+      
+      .programme-item .time-marker {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #6366f1; /* Couleur normale pour les icônes */
+        color: white;
+        font-size: 1.2rem;
+      }
+
+      .prog-skeleton-icon {
+        /* Squelette pour l'icône/marqueur temporel */
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+      }
+      
+      .prog-skeleton-line {
+        /* Lignes de texte génériques du squelette */
+        background-color: rgba(255, 255, 255, 0.15); 
+        border-radius: 4px;
+        margin-bottom: 5px;
+        height: 16px; /* Hauteur de ligne par défaut */
+        display: block;
+      }
+      
+      /* Ajuster la hauteur de la ligne du titre */
+      .prog-skeleton-line.item-title {
+        height: 24px;
+        margin-top: 8px;
+      }
+
+      /* Masquer les actions dans le squelette */
+      .programme-item.prog-skeleton-effect .prog-item-actions {
+        display: none;
+      }
+      
+      /* Ajustement de l'espace */
+      .timeline-container {
+        padding: 20px 0;
+      }
+
+
+
 
       .prog-header-wrapper {
 
+
+
           display: flex;
+
+
 
           flex-direction: column;
 
+
+
           align-items: center;
+
+
 
           margin-bottom: 30px;
 
+
+
       }
+
+
 
       .prog-day-actions {
 
+
+
           display: flex;
+
+
 
           gap: 15px;
 
+
+
           margin-top: 15px;
+
+
 
           flex-wrap: wrap;
 
+
+
           justify-content: center;
 
+
+
       }
+
+
 
       .prog-btn {
 
+
+
           display: flex; align-items: center; gap: 8px;
+
+
 
           padding: 8px 16px; border-radius: 20px; border: none;
 
+
+
           cursor: pointer; font-weight: 600; font-size: 0.9rem;
 
+
+
           transition: transform 0.2s;
+      
+
+
 
       }
+ 
+
+
 
       .prog-btn:hover { transform: scale(1.05); }
 
+
+
      
+
+
 
       .prog-btn.add-day { background: #6366f1; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
 
+
+
      
+
+
 
       /* Style distinct pour le bouton Add Session */
 
+
+
       .prog-btn.add-session {
+
+
 
           background: #10b981; /* Vert émeraude */
 
+
+
           color: white;
+
+
 
           box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
 
+
+
       }
+
+
+
+
 
 
 
       .prog-btn.remove-day { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
 
+
+
       .prog-btn.remove-day:hover { background: rgba(239, 68, 68, 0.2); color: white; }
+
+
+
+
 
 
 
@@ -802,75 +1137,131 @@ const qrCodeRef = React.useRef(null);
 
 
 
+
+
+
+
  
 
+
+
       .prog-action-btn.update:hover { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
+
+
 
       .prog-action-btn.delete:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 
 
 
+
+
+
+
       /* Modal Styles */
+
+
 
       .prog-modal-overlay {
 
+
+
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+
+
 
           background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
 
+
+
           z-index: 9999; display: flex; justify-content: center; align-items: center;
 
-      }
 
-      .prog-modal-content {
-
-          background: #1f1f2e; border: 1px solid rgba(255,255,255,0.1);
-
-          width: 90%; max-width: 400px; padding: 25px; border-radius: 16px;
-
-          color: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-
-          animation: fadeIn 0.3s ease;
 
       }
+
+
+
+
+
+
 
       @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 
 
+
+
+
+
       .prog-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+
 
       .prog-close-btn { background: none; border: none; color: #aaa; cursor: pointer; }
 
+
+
       .prog-close-btn:hover { color: white; }
+
+
 
      
 
+
+
       .prog-form-group { margin-bottom: 15px; text-align: left; }
+
+
 
       .prog-form-group label { display: block; margin-bottom: 6px; color: #ffffffff; font-size: 0.9rem; }
 
+
+
       .prog-form-group input, .prog-select {
+
+
 
           width: 100%; padding: 10px; background: rgba(0,0,0,0.3);
 
+
+
           border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+
+
 
           color: white; outline: none; font-family: inherit;
 
+
+
       }
+
+
 
       .prog-select option { background: #1f1f2e; color: white; }
 
 
 
+
+
+
+
       .prog-modal-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+
 
      
 
+
+
       .prog-save-btn { background: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
 
+
+
       .prog-save-btn.add-session-btn { background: #10b981; } /* Bouton vert pour l'ajout */
+
+
+
+
 
 
 
@@ -878,9 +1269,19 @@ const qrCodeRef = React.useRef(null);
 
 
 
+
+
+
+
       .no-data-msg { text-align: center; color: #aaa; padding: 40px; font-style: italic; }
 
-      `}</style>
+
+
+   
+      
+      `}</style>
+
+
     </section>
   );
 }
