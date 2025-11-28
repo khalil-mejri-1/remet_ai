@@ -60,6 +60,13 @@ const formatDateTime = (date) => dayjs(date).format('YYYY-MM-DD HH:mm');
 /* -----------------------
    Auth / User
 ----------------------- */
+
+
+app.get('/', (req, res) => {
+  res.send('final update 11/28/2025')
+})
+
+
 app.post('/api/register', async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
