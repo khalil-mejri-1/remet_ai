@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaUserShield, FaSearch, FaTimes, FaSpinner } from 'react-icons/fa';
 
-const API_BASE_URL = 'http://localhost:3000/admin/users'; 
+const API_BASE_URL = 'https://remet-ai-nate.vercel.app/admin/users'; 
 
 const Gestion_compte = ({ onClose }) => {
     const [users, setUsers] = useState([]);

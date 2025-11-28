@@ -59,7 +59,7 @@ const sendAttendance = async (scannedValue) => {
     }
 
     try {
-        const res = await fetch("https://remet-ai-yudu.vercel.app/api/attendance/scan", { 
+        const res = await fetch("https://remet-ai-nate.vercel.app/api/attendance/scan", { 
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
@@ -126,7 +126,7 @@ const sendAttendance = async (scannedValue) => {
             <a href="#program">
 
                 <button className="floating-presence-btn" >
-          <span className="scan-icon">📷</span> Présence
+          <span className="scan-icon">📷</span> Attendance
         </button>
             </a>
       
