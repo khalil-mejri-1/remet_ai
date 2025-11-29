@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // 👈 استيراد useMemo
 import axios from 'axios';
 import { FaUserShield, FaSearch, FaTimes, FaSpinner } from 'react-icons/fa';
 
-const API_BASE_URL = 'https://remet-ai-sbf9.vercel.app/admin/users'; 
+const API_BASE_URL = 'https://remet-ai-sbf9.vercel.app/admin/users';
 
 const Gestion_compte = ({ onClose }) => {
-    const [users, setUsers] = useState([]);
+    // سنستخدم 'allUsers' لتخزين القائمة الكاملة التي تم جلبها من الـ API
+    const [allUsers, setAllUsers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const token = localStorage.getItem('token');
@@ -16,18 +17,20 @@ const Gestion_compte = ({ onClose }) => {
             alert("Accès refusé. Veuillez vous connecter.");
             onClose();
         } else {
-            fetchUsers(); // fetch all users on load
+            // جلب المستخدمين بدون استعلام بحث في البداية
+            fetchUsers();
         }
     }, [isUserLoggedIn]);
 
-    const fetchUsers = async (query = '') => {
+    const fetchUsers = async () => { // 👈 تم إزالة معلمة 'query' لنجلب الجميع أولاً
         setIsLoading(true);
         try {
+            // سنفترض أن جلب بدون 'params' يجلب الجميع
             const response = await axios.get(`${API_BASE_URL}`, {
                 headers: { 'Authorization': `Bearer ${token}` },
-                params: query ? { search: query } : {}
             });
-            setUsers(response.data);
+            // تخزين جميع المستخدمين في 'allUsers'
+            setAllUsers(response.data); 
         } catch (error) {
             console.error(error);
             alert(error.response?.data?.message || "Erreur lors de la récupération des utilisateurs.");
@@ -36,9 +39,34 @@ const Gestion_compte = ({ onClose }) => {
         }
     };
 
+    // 🌟 وظيفة التصفية المحلية باستخدام useMemo 🌟
+    // سيتم إعادة حساب 'filteredUsers' فقط عند تغير 'allUsers' أو 'searchQuery'
+    const filteredUsers = useMemo(() => {
+        if (!searchQuery) {
+            return allUsers; // إذا كان حقل البحث فارغاً، نعرض الجميع
+        }
+
+        const lowerCaseQuery = searchQuery.toLowerCase();
+
+        return allUsers.filter(user => {
+            // البحث حسب الاسم أو البريد الإلكتروني
+            const nameMatch = user.fullName && user.fullName.toLowerCase().includes(lowerCaseQuery);
+            const emailMatch = user.email && user.email.toLowerCase().includes(lowerCaseQuery);
+            
+            return nameMatch || emailMatch;
+        });
+    }, [allUsers, searchQuery]); // التبعيات: البيانات الأصلية واستعلام البحث
+
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        fetchUsers(searchQuery);
+        // بما أننا نستخدم التصفية المحلية، يكفي أن يقوم 'searchQuery' بتحديث نفسه
+        // و'useMemo' سيعيد حساب 'filteredUsers'.
+        // لا نحتاج لـ 'fetchUsers(searchQuery)' مجدداً إلا إذا كنت تريد البحث عبر الـ API.
+        
+        // إذا كنت تصر على استخدام الـ API للبحث في كل نقرة:
+        // fetchUsers(searchQuery); 
+        
+        // **سنعتمد على التصفية المحلية حالياً**، لذا لا يوجد كود هنا.
     };
 
     const toggleRole = async (userId, currentRole) => {
@@ -49,14 +77,18 @@ const Gestion_compte = ({ onClose }) => {
             const response = await axios.put(`${API_BASE_URL}/${userId}/role`, { role: newRole }, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u));
+            
+            // تحديث حالة 'allUsers' بعد تغيير الدور
+            setAllUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u));
+            
             alert(response.data.message || 'Rôle modifié avec succès !');
         } catch (error) {
             console.error(error);
             alert(error.response?.data?.message || 'Erreur lors de la modification du rôle.');
         }
     };
-
+    
+    // ... (بقية الـ styles تبقى كما هي)
     const styles = {
         overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 },
         modal: { backgroundColor: '#fff', borderRadius: '10px', padding: '30px', width: '90%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' },
@@ -77,6 +109,7 @@ const Gestion_compte = ({ onClose }) => {
         loadingMessage: { textAlign: 'center', padding: '30px', fontSize: '1.2em', color: '#555' }
     };
 
+
     return (
         <div style={styles.overlay} onClick={onClose}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -87,18 +120,28 @@ const Gestion_compte = ({ onClose }) => {
                     <h2>Administration des Comptes</h2>
                 </div>
 
-                <form onSubmit={handleSearchSubmit} style={styles.searchForm}>
-                    <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={styles.searchInput} />
-                    <button type="submit" style={styles.searchButton} disabled={isLoading}>
-                        {isLoading ? <FaSpinner className="fa-spin" /> : <FaSearch />} Rechercher
+                {/* النموذج لم يعد يحتاج لـ 'onSubmit' لأنه سيحدث التصفية في كل تغيير */}
+                <form style={styles.searchForm}> 
+                    <input 
+                        type="text" 
+                        placeholder="Rechercher par Nom ou Email..." 
+                        value={searchQuery} 
+                        // التصفية تحدث في كل تغيير للكتابة
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        style={styles.searchInput} 
+                    />
+                    {/* زر البحث يمكن أن يكون مجرد زر تحديث في حال قمنا بتعطيل التصفية التلقائية */}
+                    <button type="submit" style={styles.searchButton} onClick={(e) => { e.preventDefault(); /* لا يوجد إجراء هنا */ }} disabled={isLoading}>
+                         <FaSearch /> Rechercher
                     </button>
                 </form>
 
-                {isLoading && <div style={styles.loadingMessage}>Chargement...</div>}
+                {isLoading && <div style={styles.loadingMessage}><FaSpinner className="fa-spin" /> Chargement...</div>}
 
-                {!isLoading && users.length === 0 && <div style={styles.loadingMessage}>Aucun utilisateur trouvé.</div>}
+                {/* 🌟 عرض 'filteredUsers' بدلاً من 'users' 🌟 */}
+                {!isLoading && filteredUsers.length === 0 && <div style={styles.loadingMessage}>Aucun utilisateur trouvé.</div>}
 
-                {!isLoading && users.length > 0 && (
+                {!isLoading && filteredUsers.length > 0 && (
                     <table style={styles.table}>
                         <thead>
                             <tr>
@@ -109,7 +152,8 @@ const Gestion_compte = ({ onClose }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map(user => (
+                            {/* 🌟 استخدام 'filteredUsers' هنا 🌟 */}
+                            {filteredUsers.map(user => (
                                 <tr key={user._id}>
                                     <td style={styles.td}>{user.fullName}</td>
                                     <td style={styles.td}>{user.email}</td>

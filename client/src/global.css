@@ -961,7 +961,7 @@ section[id] {
 /* 4. SPEAKERS SECTION (Holographic Cards)   */
 /* ========================================= */
 .speakers-section {
-  padding: 10rem 2rem;
+  padding: 5rem 2rem;
   background-color: transparent;
   position: relative;
   border: red solid 0px;
@@ -1002,7 +1002,7 @@ section[id] {
 
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.219);
   transition: all 0.4s ease;
 }
 
@@ -1203,7 +1203,7 @@ section[id] {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 1);
   border-radius: 16px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.253);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-align: left;
   /* IMPORTANT : Toujours aligné à gauche pour la lecture */
@@ -1235,8 +1235,8 @@ section[id] {
 }
 
 .item-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   margin-bottom: 8px;
   color: #222;
   line-height: 1.4;
@@ -1257,7 +1257,7 @@ section[id] {
   width: 50px;
   height: 50px;
   position: absolute;
-  top: 25px;
+  top: 15px;
   /* Alignement vertical */
   border-radius: 50%;
   background-color: white;
@@ -1380,19 +1380,54 @@ section[id] {
   .programme-item.keynote .programme-content {
     border-left-color: var(--keynote-color) !important;
   }
+
+
+
 }
 
 
 
 
 
-@media (max-width: 425px) {
+@media (max-width:  768px) {
   .hero-description {
     font-size: 0.9rem;
 
   }
+  /* --- SECTION PROGRAMME --- */
+.programme-section {
+  padding: 6rem 0rem 1px 10px;
+ 
+}
+/* LIGNE CENTRALE */
+.timeline-container::after {
+  /* Un peu plus épais pour bien voir */
+  left: 50px;
+position: absolute;}
+
+
+.time-marker {
+ margin-left: -12px;
+}
+.day-tabs-container {
+  margin-bottom: 2rem;
+}
+}
+@media (max-width:  425px) {
+  .item-title{
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .day-tab-button {
+font-size: 0.9rem;
+}
+.programme-content {
+  padding: 15px 10px;
+
+  /* IMPORTANT : Toujours aligné à gauche pour la lecture */
 }
 
+}
 
 
 
@@ -1542,13 +1577,18 @@ section[id] {
 
   .hero-buttons {
     flex-direction: column;
-    gap: 15px;
+max-width: 220px;
+margin: auto;
   }
 
   .btn {
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
+    font-size: 14px;
+  }
+  .program-btn{
+    padding: 15px 67px;
   }
 
   /* Timeline Mobile */
@@ -1739,8 +1779,10 @@ section[id] {
   font-size: 1.15rem;
   color: var(--ab-gray);
   line-height: 1.7;
-  margin-bottom: 30px;
   max-width: 90%;
+    margin: auto;
+    margin-bottom: 30px;
+
 }
 
 .ab-cta-btn {
@@ -1915,7 +1957,7 @@ section[id] {
 }
 
 .ab-team-card {
-  background: white;
+  background: rgb(255, 255, 255);
   padding: 30px 15px;
   /* Padding réduit */
   border-radius: 20px;
@@ -1923,6 +1965,7 @@ section[id] {
   border: 1px solid #f1f5f9;
   transition: all 0.4s ease;
   position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.219);
   overflow: hidden;
 }
 
@@ -2066,8 +2109,37 @@ section[id] {
   }
 }
 
+.ab-section-subtitle{
+  color: var(--ab-gray);
+}
+@media (max-width: 425px) {
+    .ab-hero-title {
+    font-size: 1.8rem;
+   
+  }
+.ab-text-gradient{
+      font-size: 1.4rem;
+ 
+}
+.ab-hero-desc{
+  font-size: 0.9rem;
+}
+.ab-hero-img {
+margin-top: -50px;
+}
+.ab-section-title {
+  letter-spacing: 0.8px;
+  font-size: 1.8rem;
+  font-weight: 900;
 
-
+}
+.ab-section-subtitle{
+  font-size: 0.9rem;
+}
+.hero-content{
+  margin-top: -80px;
+}
+}
 
 
 
@@ -2165,7 +2237,7 @@ section[id] {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   /* Effet rebond */
   border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.219);
   display: flex;
   flex-direction: column;
 }
@@ -2230,8 +2302,8 @@ section[id] {
 }
 
 .ks-session-title {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--ks-dark);
   line-height: 1.5;
   margin-bottom: 20px;
@@ -2294,8 +2366,8 @@ section[id] {
 }
 
 .ks-name {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--ks-dark);
   margin: 0;
 }
@@ -2326,7 +2398,22 @@ section[id] {
     font-size: 1.25rem;
   }
 }
+@media (max-width: 425px) {
+    .ks-session-title {
+    font-size: 1.0rem;
+  }
+  .ks-speaker-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
 
+}
+.programme-title {
+  font-size: 2rem;
+margin-top: -20px;
+margin-bottom: 0px;}
+}
 
 
 
@@ -3737,7 +3824,31 @@ section[id] {
 .prog-btn:hover {
   transform: scale(1.05);
 }
+.qr-modal-content{
 
+
+
+  background: #fcfcfc;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+
+
+  width: 100%;
+  max-width: 500px;
+  padding: 20px;
+  border-radius: 16px;
+
+
+
+  color: rgb(5, 5, 5);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+
+
+
+  animation: fadeIn 0.3s ease;
+
+
+}
 .prog-modal-content {
 
 
@@ -3778,4 +3889,70 @@ width: 300px;
 }
 .ks-add-btn{
   margin: auto;
+}
+
+
+
+@media (max-width: 425px) {
+  /* --- تصميم الزر العائم --- */
+.floating-presence-btn {
+
+  padding: 10px 20px;
+  
+  font-size: 0.9rem;
+  font-weight: bold;
+ 
+
+  /* أنيميشن طفو */
+}
+}
+
+
+
+
+
+
+
+/* ================================================= */
+/* ========== NOUVEAUX STYLES MODAL CLAIR ========== */
+/* ================================================= */
+
+.prog-modal-content.rm-modal-container-light {
+    /* Remplacer les styles sombres par des styles clairs */
+    background: #ffffff;
+    color: #0f172a; 
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.prog-modal-content.rm-modal-container-light h2,
+.prog-modal-content.rm-modal-container-light h3 {
+    color: #0f172a; /* Texte principal sombre */
+}
+
+.prog-modal-content.rm-modal-container-light .prog-form-group label {
+    color: #333; /* Labels sombres */
+}
+
+.prog-modal-content.rm-modal-container-light .prog-form-group input, 
+.prog-modal-content.rm-modal-container-light .prog-select {
+    background: #f8f8f8; /* Fond des champs clair */
+    border: 1px solid #ccc;
+    color: #333; /* Texte des champs sombre */
+}
+
+.prog-modal-content.rm-modal-container-light .prog-btn.add-day {
+    /* Style pour le bouton S'inscrire (bleu) */
+    background: #3b82f6; 
+    color: white; 
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.prog-modal-content.rm-modal-container-light .prog-btn {
+    /* Style pour le bouton Log in (gris clair) */
+    background: #e5e7eb;
+    color: #374151; 
+    border: 1px solid #ccc;
+    box-shadow: none;
 }
