@@ -7,7 +7,7 @@ import { FaCheckCircle } from "react-icons/fa";
 import Gestion_compte from './Gestioncompte';
 
 // تعريف الـ URL الخاص بالتحقق من الدور
-const ROLE_API_URL = 'https://remet-ai-sbf9.vercel.app/api/user/role/';
+const ROLE_API_URL = 'https://remet-ai-nate.vercel.app/api/user/role/';
 
 export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop, onAuthUpdate }) {
 
@@ -135,7 +135,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         await checkUserRole(savedEmail);
 
         try {
-          const response = await axios.get(`https://remet-ai-sbf9.vercel.app/api/check-registration/${savedEmail}`);
+          const response = await axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${savedEmail}`);
 
           if (response.data.registered) {
             localStorage.setItem('WORKSHOP', 'true');
@@ -172,7 +172,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         let token;
         try {
-          const res = await axios.post('https://remet-ai-sbf9.vercel.app/api/google-login', {
+          const res = await axios.post('https://remet-ai-nate.vercel.app/api/google-login', {
             fullName: userData.name,
             email: userData.email
           });
@@ -203,7 +203,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         closeModal_register();
 
         setTimeout(() => {
-          axios.get(`https://remet-ai-sbf9.vercel.app/api/check-registration/${userData.email}`)
+          axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${userData.email}`)
             .then(res => {
               if (!res.data.registered) {
                 localStorage.removeItem('WORKSHOP');
@@ -233,7 +233,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     }
 
     try {
-      const res = await axios.post('https://remet-ai-sbf9.vercel.app/api/register', {
+      const res = await axios.post('https://remet-ai-nate.vercel.app/api/register', {
         fullName: formData.fullname,
         email: formData.email,
         password: formData.password
@@ -276,7 +276,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('https://remet-ai-sbf9.vercel.app/api/login', {
+      const res = await axios.post('https://remet-ai-nate.vercel.app/api/login', {
         email: email,
         password: password
       });
@@ -303,7 +303,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       closeModal_login();
 
       setTimeout(() => {
-        axios.get(`https://remet-ai-sbf9.vercel.app/api/check-registration/${email}`)
+        axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${email}`)
           .then(apiRes => {
             if (!apiRes.data.registered) {
               localStorage.removeItem('WORKSHOP');
@@ -351,7 +351,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     };
 
     try {
-      await axios.post(`https://remet-ai-sbf9.vercel.app/api/registration/${userId}`, registrationData, config);
+      await axios.post(`https://remet-ai-nate.vercel.app/api/registration/${userId}`, registrationData, config);
       localStorage.setItem('login', 'true');
       localStorage.setItem('WORKSHOP', 'true');
       closeModal();

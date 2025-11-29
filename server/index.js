@@ -63,7 +63,7 @@ const formatDateTime = (date) => dayjs(date).format('YYYY-MM-DD HH:mm');
 
 
 app.get('/', (req, res) => {
-  res.send('final update 11/29/2025')
+  res.send('final update_ 11/29/2025')
 })
 
 
@@ -235,20 +235,17 @@ app.get('/api/sessions/:id/qrcode', async (req, res) => {
 ----------------------- */
 app.post('/api/attendance/scan', async (req, res) => {
     try {
-        const { secretCode, userId, fullName, email } = req.body;
+        const { sessionId, userId, fullName, email } = req.body;
 
-        if (!secretCode || !userId || !fullName || !email) 
+        if (!sessionId || !userId || !fullName || !email) 
             return res.status(400).json({ message: 'Tous les champs sont requis' });
-
-        // Find session by secret code (optional, can be null)
-        const session = await Session.findOne({ secretCode });
 
         const attendanceObj = {
             userId,
-            sessionId: session ? session._id : null, // Send null if session not found
+            sessionId, // مباشرة بدون بحث
             fullName,
             email,
-            class: null, // or "0000" if you prefer
+            class: null
         };
 
         const attendance = await Attendance.create(attendanceObj);
@@ -261,9 +258,11 @@ app.post('/api/attendance/scan', async (req, res) => {
 
     } catch (err) {
         console.error("Scan Error:", err);
+        
         if (err.code === 11000) {
             return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
         }
+
         res.status(500).json({ message: 'Erreur serveur', error: err.message });
     }
 });

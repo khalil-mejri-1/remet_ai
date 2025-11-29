@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 // Configuration API URL (Make sure your Node server is running on port 5000)
 // Nous allons ajouter un endpoint pour vérifier le rôle de l'utilisateur par email.
-const API_URL = 'https://remet-ai-sbf9.vercel.app/api';
+const API_URL = 'https://remet-ai-nate.vercel.app/api';
 
 const About = () => {
   // --- STATE ---

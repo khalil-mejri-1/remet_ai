@@ -66,7 +66,7 @@ const LoadingPlaceholder = ({ count = 3 }) => {
 
 
 // --- URL API ---
-const API_URL = 'https://remet-ai-sbf9.vercel.app/api';
+const API_URL = 'https://remet-ai-nate.vercel.app/api';
 
 const KeySessions = () => {
   const [sessions, setSessions] = useState([]);
@@ -117,7 +117,7 @@ const KeySessions = () => {
 
     try {
       // Assuming the root API URL returns all sessions
-      const res = await axios.get("https://remet-ai-sbf9.vercel.app/api/KeySession");
+      const res = await axios.get("https://remet-ai-nate.vercel.app/api/KeySession");
       const mappedSessions = res.data.map(sess => ({
         ...sess,
         // Ensure icon is correctly set based on iconType
@@ -187,7 +187,7 @@ const KeySessions = () => {
       } else {
         // CREATE
         // NOTE: Endpoint for POST should be just /KeySession if API_URL is root.
-        // Assuming API_URL is 'https://remet-ai-sbf9.vercel.app/api', then the endpoint should be `${API_URL}/KeySession`
+        // Assuming API_URL is 'https://remet-ai-nate.vercel.app/api', then the endpoint should be `${API_URL}/KeySession`
         // Corrected POST endpoint:
         const res = await axios.post(`${API_URL}/KeySession`, currentSession);
 
