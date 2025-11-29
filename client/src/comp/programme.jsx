@@ -149,33 +149,36 @@ export default function Programme() {
 
 
 
-  const filteredSessionId = correctQR.replace(/\D/g, "");
 
 
-  const handleScanSuccess = async (scannedValue, scanType) => {
+  const handleScanSuccess = async (scannedValue, scanType, selectedId) => {
     try {
-      // 🟦 جلب بيانات المستخدم من localStorage
       const userId = localStorage.getItem("userId");
       const fullName = localStorage.getItem("userName");
       const email = localStorage.getItem("userEmail");
 
-      // 🟦 استخراج sessionId من correctQR (أرقام فقط)
-      const sessionId = scannedValue.replace(/\D/g, "");
+
+
+      const sessionId = scannedValue.replace(/\D/g, ""); // يبقى كما هو
 
       const payload = {
         userId,
         fullName,
         email,
-        secretCode: sessionId   // backend يستخدم secretCode للبحث عن session
+        sessionId   // ← هنا التغيير
       };
+
 
       console.log("📤 Sending payload:", payload);
 
-      const response = await fetch("https://remet-ai-sbf9.vercel.app/api/attendance/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch(
+        "https://remet-ai-nate.vercel.app/api/attendance/scan",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }
+      );
 
       const data = await response.json();
 
@@ -194,7 +197,6 @@ export default function Programme() {
   };
 
 
-
   // --- MISE À JOUR : Vérification du statut Admin (Utilise le nouvel endpoint GET) ---
   const checkAdminStatus = async () => {
     const userEmail = localStorage.getItem('userEmail');
@@ -207,7 +209,7 @@ export default function Programme() {
     const encodedEmail = encodeURIComponent(userEmail);
 
     try {
-      const res = await fetch(`https://remet-ai-sbf9.vercel.app/api/user/role/${encodedEmail}`, {
+      const res = await fetch(`https://remet-ai-nate.vercel.app/api/user/role/${encodedEmail}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +235,7 @@ export default function Programme() {
   // Fetch data from backend
   const fetchData = async () => {
     try {
-      const res = await fetch('https://remet-ai-sbf9.vercel.app/api/program');
+      const res = await fetch('https://remet-ai-nate.vercel.app/api/program');
       const programs = await res.json();
       const formatted = {};
       programs.forEach(p => formatted[p.day] = p.sessions);
@@ -271,7 +273,7 @@ export default function Programme() {
     }
 
     try {
-      const res = await fetch("https://remet-ai-sbf9.vercel.app/api/attendance/scan", {
+      const res = await fetch("https://remet-ai-nate.vercel.app/api/attendance/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -402,7 +404,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!newDayName) return;
-    const res = await fetch('https://remet-ai-sbf9.vercel.app/api/program', {
+    const res = await fetch('https://remet-ai-nate.vercel.app/api/program', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ day: newDayName })
@@ -418,7 +420,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!dayToRemove) return;
-    const res = await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
+    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
     if (res.ok) {
       fetchData();
       setIsRemoveDayModalOpen(false);
@@ -430,7 +432,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     const updatedSessions = [...(data[activeDay] || []), newSession];
-    const res = await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessions: updatedSessions })
@@ -451,7 +453,7 @@ export default function Programme() {
         sess.id === currentItem.id ? currentItem : sess
       );
 
-      await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
@@ -470,7 +472,7 @@ export default function Programme() {
     if (!isAdmin) return; // Sécurité côté client
     if (window.confirm("Supprimer cet élément du programme ?")) {
       const updatedSessions = data[activeDay].filter(item => item.id !== itemId);
-      await fetch(`https://remet-ai-sbf9.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
@@ -858,15 +860,23 @@ export default function Programme() {
       {/* --- MODAL SCANNER (Mis à jour avec scanType) --- */}
       {showScannerModal && (
         <>
-
           <QRScannerModal
-            isOpen={isOpen}
+            isOpen={showScannerModal}
             onClose={closeScanner}
-            correctQR={correctQR}
-            onSuccess={handleScanSuccess}
+            correctQR={`${selectedId}${currentScanType}`}
+            onSuccess={(scannedValue, scanType) =>
+              handleScanSuccess(scannedValue, scanType, selectedId)
+            }
             scanType="entry"
           />
 
+          {/* <QRScannerModal
+            isOpen={showScannerModal}
+            onClose={closeScanner}
+            correctQR={`${selectedId}${currentScanType}`}
+            onSuccess={sendAttendance}
+            scanType={currentScanType}
+          /> */}
 
         </>
 

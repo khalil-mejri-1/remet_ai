@@ -31,8 +31,8 @@ const XIcon = () => (
 );
 
 // ===== URL BASE API =====
-const API_URL = "https://remet-ai-sbf9.vercel.app/api/speakers";
-const USER_ROLE_CHECK_URL = "https://remet-ai-sbf9.vercel.app/api/user/role";
+const API_URL = "https://remet-ai-nate.vercel.app/api/speakers";
+  const USER_ROLE_CHECK_URL = "https://remet-ai-nate.vercel.app/api/user/role";
 
 
 // ===== Speaker Card Component (Non modifié) =====
