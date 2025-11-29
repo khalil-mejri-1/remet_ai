@@ -233,27 +233,27 @@ export default function Speakers() {
       </div>
 
       {isModalOpen && currentSpeaker && isAdmin && ( 
-        <div className="sp-modal-overlay">
-          <div className="sp-modal-content">
-            <div className="sp-modal-header">
+        <div className="ks-modal-overlay">
+          <div className="ks-modal-content">
+            <div className="ks-modal-header">
               <h3>{currentSpeaker._id ? "Edit Speaker" : "Add Speaker"}</h3>
-              <button className="sp-close-btn" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
+              <button className="ks-close-btn" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
                 <XIcon />
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="sp-modal-form">
-              <div className="sp-form-group">
+            <form onSubmit={handleSave} className="ks-modal-form">
+              <div className="ks-form-group">
                 <label>Full Name</label>
                 <input type="text" name="name" value={currentSpeaker.name} onChange={handleModalChange} required disabled={isSubmitting} />
               </div>
 
-              <div className="sp-form-group">
+              <div className="ks-form-group">
                 <label>Title</label>
                 <input type="text" name="title" value={currentSpeaker.title} onChange={handleModalChange} required disabled={isSubmitting} />
               </div>
 
-              <div className="sp-form-group">
+              <div className="ks-form-group">
                 <label>Expert Type</label>
                 <select name="expertType" value={currentSpeaker.expertType} onChange={handleModalChange} disabled={isSubmitting}>
                   <option value="ia">IA (Bleu)</option>
@@ -261,19 +261,19 @@ export default function Speakers() {
                 </select>
               </div>
 
-              <div className="sp-form-group">
+              <div className="ks-form-group">
                 <label>Image URL (Optional)</label>
                 <input type="text" name="image" value={currentSpeaker.image || ""} onChange={handleModalChange} placeholder="https://..." disabled={isSubmitting} />
               </div>
 
-              <div className="sp-form-group">
+              <div className="ks-form-group">
                 <label>Description</label>
                 <textarea name="description" value={currentSpeaker.description} onChange={handleModalChange} rows="3" disabled={isSubmitting} />
               </div>
 
-              <div className="sp-modal-actions">
-                <button type="button" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Cancel</button>
-                <button type="submit" disabled={isSubmitting}>
+              <div className="ks-modal-actions">
+                <button type="button" className="ks-cancel-btn" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className="ks-save-btn" disabled={isSubmitting}>
                     {isSubmitting ? "Saving..." : "Save"}
                 </button>
               </div>
@@ -391,6 +391,11 @@ export default function Speakers() {
         .sp-modal-actions button[type="submit"]:hover { background: #4f46e5; }
         .sp-modal-actions button[type="button"] { flex: 1; background: transparent; border: 1px solid #555; color: #ffffffff; padding: 10px; border-radius: 6px; cursor: pointer; transition: border-color 0.2s; }
         .sp-modal-actions button[type="button"]:hover { border-color: #999; color: white; }
+
+
+
+
+
       `}</style>
     </section>
   );

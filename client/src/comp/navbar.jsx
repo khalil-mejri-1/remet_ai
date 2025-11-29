@@ -3,23 +3,27 @@ import logo from "../img/logo.png";
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import { FiLogOut } from "react-icons/fi";
-import { FaCheckCircle } from "react-icons/fa"; // You might need to install react-icons/fa if not present, or use an emoji
-import Gestion_compte from './Gestioncompte'; // Assure-toi du chemin correct
+import { FaCheckCircle } from "react-icons/fa";
+import Gestion_compte from './Gestioncompte';
+
+// تعريف الـ URL الخاص بالتحقق من الدور
+const ROLE_API_URL = 'https://remet-ai-sbf9.vercel.app/api/user/role/';
+
 export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop, onAuthUpdate }) {
 
   // --- UI States ---
   const [isOpen, setIsOpen] = useState(false);
   const [showModal_register, setShowModal_register] = useState(false);
   const [showModal_login, setShowModal_login] = useState(false);
-
-  // State for the Auth Alert Popup
   const [showAuthAlert, setShowAuthAlert] = useState(false);
-
-  // NEW: State for the Success/Already Registered Popup
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  // 🌟 حالة جديدة لتأكيد تسجيل الخروج 🌟
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // --- Auth State ---
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('login') === 'true');
+  const [userRole, setUserRole] = useState(null);
 
   // --- Workshop Form State ---
   const [workshopForm, setWorkshopForm] = useState({
@@ -32,7 +36,6 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const [formData, setFormData] = useState({
     fullname: '', email: '', password: '', confirmPassword: ''
   });
-  const [showAdminModal, setShowAdminModal] = useState(false); // NOUVEL ÉTAT POUR LA MODALE ADMIN
 
   // --- Helpers ---
   const lockScroll = () => { document.body.style.overflow = 'hidden'; };
@@ -46,7 +49,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   // Update existing openers to ensure they close alerts if open
   const openModal_register = () => {
     setShowAuthAlert(false);
-    setShowSuccessAlert(false); // Close success alert
+    setShowSuccessAlert(false);
     setShowModal_register(true);
     setShowModal_login(false);
     setIsOpen(false);
@@ -56,7 +59,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
   const openModal_login = () => {
     setShowAuthAlert(false);
-    setShowSuccessAlert(false); // Close success alert
+    setShowSuccessAlert(false);
     setShowModal_login(true);
     setShowModal_register(false);
     setIsOpen(false);
@@ -64,17 +67,43 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   };
   const closeModal_login = () => { setShowModal_login(false); unlockScroll(); };
 
+  // 🌟 دالة إغلاق نافذة تأكيد تسجيل الخروج 🌟
+  const closeLogoutConfirmModal = () => {
+    setShowLogoutConfirm(false);
+    unlockScroll();
+  };
+
+
+  // 🌟 دالة التحقق من الدور 🌟
+  const checkUserRole = async (userEmail) => {
+    if (!userEmail) {
+      setUserRole(null);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${ROLE_API_URL}${userEmail}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setUserRole(response.data.role);
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      setUserRole('student');
+    }
+  };
+
   // ----------------------------------------------------------------
   // Listeners for Hero Buttons (Auth Alert & Success Alert)
   // ----------------------------------------------------------------
   useEffect(() => {
-    // Handler for Auth Alert
     const handleAuthTrigger = () => {
       setShowAuthAlert(true);
       lockScroll();
     };
+    const handleOpenRegister = () => { openModal_register(); }; // 👈 NOUVEAU
+        const handleOpenLogin = () => { openModal_login(); };      // 👈 NOUVEAU
 
-    // Handler for Success/Already Registered Alert
     const handleSuccessTrigger = () => {
       setShowSuccessAlert(true);
       lockScroll();
@@ -82,24 +111,29 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
     window.addEventListener('trigger-auth-alert', handleAuthTrigger);
     window.addEventListener('trigger-success-alert', handleSuccessTrigger);
+    window.addEventListener('open-register-modal', handleOpenRegister); // 👈 Écouteur
+    window.addEventListener('open-login-modal', handleOpenLogin);       //
 
-    // Cleanup
     return () => {
       window.removeEventListener('trigger-auth-alert', handleAuthTrigger);
       window.removeEventListener('trigger-success-alert', handleSuccessTrigger);
+      window.removeEventListener('open-register-modal', handleOpenRegister); // 👈 Nettoyage
+            window.removeEventListener('open-login-modal', handleOpenLogin);
     };
   }, []);
 
   // ----------------------------------------------------------------
-  // 1. useEffect: Refresh Logic
+  // 1. useEffect: Refresh Logic 
   // ----------------------------------------------------------------
   useEffect(() => {
-    const checkRegistrationStatus = async () => {
+    const checkRegistrationStatusAndRole = async () => {
       const isAuth = localStorage.getItem('login') === 'true';
       const savedEmail = localStorage.getItem('userEmail');
       const savedName = localStorage.getItem('userName');
 
       if (isAuth && savedEmail) {
+        await checkUserRole(savedEmail);
+
         try {
           const response = await axios.get(`https://remet-ai-sbf9.vercel.app/api/check-registration/${savedEmail}`);
 
@@ -116,11 +150,12 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         } catch (error) {
           console.error("Error checking registration status:", error);
         }
+      } else {
+        setUserRole(null);
       }
     };
-    checkRegistrationStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    checkRegistrationStatusAndRole();
+  }, [isLoggedIn]);
 
   // ----------------------------------------------------------------
   // 2. Google Login Logic
@@ -135,16 +170,16 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         const userData = userInfo.data;
 
+        let token;
         try {
           const res = await axios.post('https://remet-ai-sbf9.vercel.app/api/google-login', {
             fullName: userData.name,
             email: userData.email
           });
-
+          token = res.data.token;
           if (res.data.token) localStorage.setItem('token', res.data.token);
           if (res.data.userId) localStorage.setItem('userId', res.data.userId);
           if (res.data._id) localStorage.setItem('userId', res.data._id);
-
         } catch (serverError) {
           console.error("Backend Google Sync Error:", serverError);
         }
@@ -155,6 +190,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         setIsLoggedIn(true);
         if (onAuthUpdate) onAuthUpdate();
+
+        await checkUserRole(userData.email);
 
         setWorkshopForm(prev => ({
           ...prev,
@@ -213,6 +250,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       setIsLoggedIn(true);
       if (onAuthUpdate) onAuthUpdate();
 
+      await checkUserRole(formData.email);
+
       closeModal_register();
 
       setWorkshopForm(prev => ({
@@ -252,6 +291,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
       setIsLoggedIn(true);
       if (onAuthUpdate) onAuthUpdate();
+
+      await checkUserRole(email);
 
       setWorkshopForm(prev => ({
         ...prev,
@@ -314,8 +355,6 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       localStorage.setItem('login', 'true');
       localStorage.setItem('WORKSHOP', 'true');
       closeModal();
-      // Instead of alert, we can trigger the success modal directly if we wanted, 
-      // but the requirement says 'window reload' usually. We'll stick to alert then reload for safety.
       alert("Inscription confirmée avec succès !");
       window.location.reload();
     } catch (error) {
@@ -330,8 +369,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     setWorkshopForm(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- Handlers Others ---
-  const handleLogout = () => {
+  // 🌟 دالة تسجيل الخروج الفعلية 🌟
+  const confirmLogout = () => {
     googleLogout();
     localStorage.removeItem('login');
     localStorage.removeItem('userName');
@@ -341,10 +380,19 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     localStorage.removeItem('WORKSHOP');
 
     setIsLoggedIn(false);
+    setUserRole(null);
     setWorkshopForm({ fullname: '', email: '', institution: '', level: '', phone: '' });
 
     if (onAuthUpdate) onAuthUpdate();
+
+    closeLogoutConfirmModal(); // إغلاق النافذة المنبثقة
     window.location.reload();
+  };
+
+  // 🌟 دالة فتح نافذة التأكيد (التي يتم استدعاؤها من الزر) 🌟
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+    lockScroll();
   };
 
   const toggleMenu = () => { setIsOpen(!isOpen); };
@@ -353,7 +401,6 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     const { name, value } = e.target;
     setFormData(prevState => ({ ...prevState, [name]: value }));
   };
-
 
 
   return (
@@ -369,8 +416,16 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <li><a href="#speakers">SPEAKERS</a></li>
             <li><a href="#key-sessions">KEY SESSIONS</a></li>
             <li><a href="#program">PROGRAM</a></li>
-            <li><a       onClick={() => setShowAdminModal(true)} style={{cursor:"pointer"}}>Gestion de compte</a></li>
-
+            {isLoggedIn && userRole === 'admin' && (
+              <li>
+                <a
+                  onClick={openAdminModal}
+                  style={{ cursor: "pointer", fontWeight: '900' }}
+                >
+                  Gestion de compte
+                </a>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -387,6 +442,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             </>
           ) : (
             <div className="navbar-login">
+              {/* 🌟 استدعاء الدالة الجديدة لفتح التأكيد 🌟 */}
               <button
                 className="login-button"
                 onClick={handleLogout}
@@ -411,6 +467,17 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <li><a href="#key-sessions" onClick={toggleMenu}>KEY SESSIONS</a></li>
             <li><a href="#speakers" onClick={toggleMenu}>SPEAKERS</a></li>
             <li><a href="#program" onClick={toggleMenu}>PROGRAM</a></li>
+            {isLoggedIn && userRole === 'admin' && (
+              <li>
+                <a
+                  onClick={openAdminModal}
+                  style={{ cursor: "pointer", color: '#ffcc00', fontWeight: 'bold' }}
+                >
+                  Gestion de compte
+                </a>
+              </li>
+            )}
+
             {!isLoggedIn ? (
               <>
                 <li>
@@ -424,10 +491,11 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
               </>
             ) : (
               <li className="mobile-login-item">
+                {/* 🌟 استدعاء الدالة الجديدة لفتح التأكيد 🌟 */}
                 <button
                   className="login-button"
                   onClick={handleLogout}
-                  style={{ backgroundColor: '#dc3545', width: '100%', marginTop: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  style={{ backgroundColor: '#dc3545', width: '100%', marginTop: '10px', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <FiLogOut size={20} />
                   Log out
@@ -438,7 +506,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         </div>
       </nav>
 
-      {/* --- MODALE 4 : AUTH ALERT POPUP --- */}
+      {/* --- MODALE 4 : AUTH ALERT POPUP (لم تتغير) --- */}
       {showAuthAlert && (
         <div className="rm-overlay" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
@@ -457,7 +525,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 <span className="btn-glow"></span>
               </button>
 
-              <button className="login-button" onClick={openModal_login} style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center' }}>
+              <button className="login-button" onClick={openModal_login}   style={{ width: '100%', justifyContent: 'center', backgroundColor: '#e5e7eb', color: '#374151' }}>
                 Log in
               </button>
             </div>
@@ -465,13 +533,12 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         </div>
       )}
 
-      {/* --- NEW MODALE 5 : ALREADY REGISTERED (SUCCESS) POPUP --- */}
+      {/* --- NEW MODALE 5 : ALREADY REGISTERED (SUCCESS) POPUP (لم تتغير) --- */}
       {showSuccessAlert && (
         <div className="rm-overlay" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
             <button className="rm-close-btn" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>×</button>
 
-            {/* Checkmark Icon */}
             <div style={{ color: '#22c55e', fontSize: '4rem', marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
               <FaCheckCircle />
             </div>
@@ -479,7 +546,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Congratulations !</h2>
             <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
               You are already registered for the REMET-AI workshop.<br />
-             We look forward to seeing you!
+              We look forward to seeing you!
             </p>
 
             <button
@@ -493,7 +560,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         </div>
       )}
 
-      {/* --- MODALE 1 : WORKSHOP --- */}
+      {/* --- MODALE 1 : WORKSHOP (لم تتغير) --- */}
       {isWorkshopOpen && (
         <div className="rm-overlay" onClick={closeModal}>
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -544,7 +611,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         </div>
       )}
 
-      {/* --- MODALE 2 : REGISTER --- */}
+      {/* --- MODALE 2 : REGISTER (لم تتغير) --- */}
       {showModal_register && (
         <div className="rm-overlay" onClick={closeModal_register}>
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -639,7 +706,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         </div>
       )}
 
-      {/* --- MODALE 3 : LOGIN --- */}
+      {/* --- MODALE 3 : LOGIN (لم تتغير) --- */}
       {showModal_login && (
         <div className="rm-overlay" onClick={closeModal_login}>
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -682,7 +749,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
                   <p className="lo-footer-text">
                     Pas encore de compte ?
-                    <button onClick={openModal_register} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline', marginLeft: '5px' }}>Inscrivez-vous</button>
+                    <button onClick={openModal_register} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Inscrivez-vous</button>
                   </p>
                   <div className="lo-divider">
                     <span>Ou continuer avec</span>
@@ -718,7 +785,92 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       )}
 
       {showAdminModal && (
-          <Gestion_compte onClose={closeAdminModal} />
+        <Gestion_compte onClose={closeAdminModal} />
+      )}
+
+      {/* -------------------------------------------------------- */}
+      {/* 🌟 MODAL 6: LOGOUT CONFIRMATION POPUP (نافذة التأكيد) 🌟 */}
+      {/* -------------------------------------------------------- */}
+      {showLogoutConfirm && (
+        <div className="rm-overlay" onClick={closeLogoutConfirmModal}>
+          <div
+            className="rm-modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '420px',
+              textAlign: 'center',
+              padding: '30px',
+              backgroundColor: '#ffffff', // خلفية بيضاء (فاتح)
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #e0e0e0',
+              color: '#333'
+            }}
+          >
+            {/* زر الإغلاق */}
+            <button
+              className="rm-close-btn"
+              onClick={closeLogoutConfirmModal}
+              style={{
+                color: '#aaa',
+                backgroundColor: 'transparent',
+                fontSize: '1.5rem',
+                top: '15px',
+                right: '15px'
+              }}
+            >
+              ×
+            </button>
+
+            {/* أيقونة تحذير */}
+            <div style={{ color: '#dc3545', fontSize: '3rem', marginBottom: '15px' }}>⚠️</div>
+
+            {/* عنوان ورسالة */}
+            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Confirm Logout  </h2>
+            <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.6' }}>
+              Are you sure you want to log out of your account?
+              <br />
+              You will need to log in again to access the workshops.
+            </p>
+
+            {/* أزرار الإجراءات */}
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              {/* زر الإلغاء */}
+              <button
+                onClick={closeLogoutConfirmModal}
+                style={{
+                  flexGrow: 1,
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f8f9fa',
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Cancel
+              </button>
+
+              {/* زر التأكيد */}
+              <button
+                onClick={confirmLogout}
+                style={{
+                  flexGrow: 1,
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#dc3545', // أحمر للخروج
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

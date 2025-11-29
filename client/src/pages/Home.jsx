@@ -64,7 +64,7 @@ export default function Home() {
             <a href="#program">
 
                 <button className="floating-presence-btn" >
-          <span className="scan-icon">📷</span> Attendance
+          <span className="scan-icon"></span> Attendance
         </button>
             </a>
       

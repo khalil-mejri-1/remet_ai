@@ -638,10 +638,10 @@ const About = () => {
                     cursor: pointer; font-size: 0.8rem; display: flex; justify-content: center; align-items: center;
                     gap: 5px; transition: all 0.2s ease; font-weight: 500;
                 }
-                .ab-action-btn.update { background: rgba(99, 102, 241, 0.1); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.2); }
-                .ab-action-btn.update:hover { background: rgba(99, 102, 241, 0.2); color: white; }
-                .ab-action-btn.delete { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); }
-                .ab-action-btn.delete:hover { background: rgba(239, 68, 68, 0.2); color: white; }
+                .ab-action-btn.update { background: rgba(155, 236, 134, 0.57); color: #0f0f0fff; border-color: rgba(99, 102, 241, 0.2); }
+                .ab-action-btn.update:hover { background:  rgba(154, 236, 134, 1); color: black; }
+                .ab-action-btn.delete { background: rgba(239, 68, 68, 0.4); color: #111111ff; border-color: rgba(239, 68, 68, 0.2); }
+                .ab-action-btn.delete:hover { background: rgba(239, 68, 68, 1); color: black; }
             `}</style>
     </div>
   );

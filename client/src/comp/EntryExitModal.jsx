@@ -1,46 +1,41 @@
 // src/comp/EntryExitModal.jsx
 import React from 'react';
 
-const EntryExitModal = ({ isOpen, onClose, onSelectScan, EnterIcon, ExitIcon, XIcon }) => {
+// ✅ يجب أن تستقبل isOpen من الـ props
+const EntryExitModal = ({ isOpen, onClose, onSelectScan, sessionId, EnterIcon, ExitIcon, XIcon }) => {
+    // يجب أن نستخدم isOpen هنا للتحقق من العرض، رغم أنه محقق في المكون الأب
     if (!isOpen) return null;
 
     return (
-        // Le clic sur l'overlay ferme le modal
+        // ✅ إضافة onClick={onClose} على الـ overlay للسماح بالإغلاق بالنقر خارجه (إذا كان الـ CSS يدعم ذلك)
         <div className="prog-modal-overlay" onClick={onClose}>
-            <div 
-                className="prog-modal-content entry-exit-modal" 
-                // Empêche la fermeture du modal au clic interne
-                onClick={(e) => e.stopPropagation()} 
-            >
+            {/* إيقاف propagation النقر داخل الـ content لتجنب إغلاق الـ Modal عند النقر داخله */}
+            <div className="prog-modal-content entry-exit-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="prog-modal-header">
-                    <h3>Select Scan Type</h3>
+                    <h3>Scan QR Code to  Attendance </h3>
+                    
                     <button onClick={onClose} className="prog-close-btn"><XIcon /></button>
                 </div>
-                
-                <p style={{textAlign:"center"}}>Please choose your action for attendance.</p>
-
-                <div className="entry-exit-action">
-                    <button 
+                <p style={{textAlign:"center",marginBottom:"30px"}}>Attendance Registration in </p>
+                <div className="entry-exit-options">
+                    <button
                         className="prog-bt entry-btn"
-                        // Au clic, il ouvre le scanner avec le type 'entry'
-                        onClick={() => onSelectScan('entry')} 
+                        // ✅ تمرير sessionId مع 'entry'
+                        onClick={() => { onSelectScan('entry', sessionId); onClose(); }}
                     >
-                        <EnterIcon />
-                       Check In
+                        <EnterIcon /> Entrer 
                     </button>
-                    
-                    <button 
-                        className="prog-bt entry-btn"
-                        // Au clic, il ouvre le scanner avec le type 'exit'
-                        onClick={() => onSelectScan('exit')} 
+                    <button
+                        className="prog-bt exit-btn"
+                        // ✅ تمرير sessionId مع 'exit'
+                        onClick={() => { onSelectScan('exit', sessionId); onClose(); }}
                     >
-                        <ExitIcon />
-                        Check Out
+                        <ExitIcon /> Sortie
                     </button>
                 </div>
             </div>
         </div>
-    );
+    )
 };
 
 export default EntryExitModal;
