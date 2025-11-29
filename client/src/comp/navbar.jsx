@@ -5,9 +5,9 @@ import axios from 'axios';
 import { FiLogOut } from "react-icons/fi";
 import { FaCheckCircle } from "react-icons/fa";
 import Gestion_compte from './Gestioncompte';
-
+import PresenceManagement from './PresenceManagement.jsx'; // 👈 NOUVEL IMPORT (Créé à l'étape 2)
 // تعريف الـ URL الخاص بالتحقق من الدور
-const ROLE_API_URL = 'https://remet-ai-nate.vercel.app/api/user/role/';
+const ROLE_API_URL = 'http://localhost:3000/api/user/role/';
 
 export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop, onAuthUpdate }) {
 
@@ -19,6 +19,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   // 🌟 حالة جديدة لتأكيد تسجيل الخروج 🌟
+  const [showPresenceModal, setShowPresenceModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // --- Auth State ---
@@ -36,6 +37,17 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const [formData, setFormData] = useState({
     fullname: '', email: '', password: '', confirmPassword: ''
   });
+
+  const openPresenceModal = () => {
+    setShowPresenceModal(true);
+    setIsOpen(false);
+    lockScroll();
+  };
+  const closePresenceModal = () => {
+    setShowPresenceModal(false);
+    unlockScroll();
+  };
+
 
   // --- Helpers ---
   const lockScroll = () => { document.body.style.overflow = 'hidden'; };
@@ -96,13 +108,19 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   // ----------------------------------------------------------------
   // Listeners for Hero Buttons (Auth Alert & Success Alert)
   // ----------------------------------------------------------------
+
+  // ----------------------------------------------------------------
+  // Listeners for Hero Buttons (Auth Alert & Success Alert) ET Workshop
+  // ----------------------------------------------------------------
   useEffect(() => {
     const handleAuthTrigger = () => {
       setShowAuthAlert(true);
       lockScroll();
     };
-    const handleOpenRegister = () => { openModal_register(); }; // 👈 NOUVEAU
-        const handleOpenLogin = () => { openModal_login(); };      // 👈 NOUVEAU
+    const handleOpenRegister = () => { openModal_register(); };
+    const handleOpenLogin = () => { openModal_login(); };
+    // 👈 NOUVEAU GESTIONNAIRE D'ÉVÉNEMENT
+    const handleOpenWorkshopModal = () => { openModal(); };
 
     const handleSuccessTrigger = () => {
       setShowSuccessAlert(true);
@@ -111,16 +129,22 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
     window.addEventListener('trigger-auth-alert', handleAuthTrigger);
     window.addEventListener('trigger-success-alert', handleSuccessTrigger);
-    window.addEventListener('open-register-modal', handleOpenRegister); // 👈 Écouteur
-    window.addEventListener('open-login-modal', handleOpenLogin);       //
+    window.addEventListener('open-register-modal', handleOpenRegister);
+    window.addEventListener('open-login-modal', handleOpenLogin);
+    // 👈 NOUVEL ÉCOUTEUR
+    window.addEventListener('open-workshop-modal', handleOpenWorkshopModal);
 
     return () => {
       window.removeEventListener('trigger-auth-alert', handleAuthTrigger);
       window.removeEventListener('trigger-success-alert', handleSuccessTrigger);
-      window.removeEventListener('open-register-modal', handleOpenRegister); // 👈 Nettoyage
-            window.removeEventListener('open-login-modal', handleOpenLogin);
+      window.removeEventListener('open-register-modal', handleOpenRegister);
+      window.removeEventListener('open-login-modal', handleOpenLogin);
+      // 👈 NETTOYAGE
+      window.removeEventListener('open-workshop-modal', handleOpenWorkshopModal);
     };
-  }, []);
+  }, [/* Ajoutez openModal si vous utilisez des fonctions stables ou useCallbacks pour les fonctions */]);
+
+  // ... (code existant)
 
   // ----------------------------------------------------------------
   // 1. useEffect: Refresh Logic 
@@ -135,7 +159,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         await checkUserRole(savedEmail);
 
         try {
-          const response = await axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${savedEmail}`);
+          const response = await axios.get(`http://localhost:3000/api/check-registration/${savedEmail}`);
 
           if (response.data.registered) {
             localStorage.setItem('WORKSHOP', 'true');
@@ -172,7 +196,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         let token;
         try {
-          const res = await axios.post('https://remet-ai-nate.vercel.app/api/google-login', {
+          const res = await axios.post('http://localhost:3000/api/google-login', {
             fullName: userData.name,
             email: userData.email
           });
@@ -203,7 +227,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         closeModal_register();
 
         setTimeout(() => {
-          axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${userData.email}`)
+          axios.get(`http://localhost:3000/api/check-registration/${userData.email}`)
             .then(res => {
               if (!res.data.registered) {
                 localStorage.removeItem('WORKSHOP');
@@ -233,7 +257,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     }
 
     try {
-      const res = await axios.post('https://remet-ai-nate.vercel.app/api/register', {
+      const res = await axios.post('http://localhost:3000/api/register', {
         fullName: formData.fullname,
         email: formData.email,
         password: formData.password
@@ -276,7 +300,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('https://remet-ai-nate.vercel.app/api/login', {
+      const res = await axios.post('http://localhost:3000/api/login', {
         email: email,
         password: password
       });
@@ -303,7 +327,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       closeModal_login();
 
       setTimeout(() => {
-        axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${email}`)
+        axios.get(`http://localhost:3000/api/check-registration/${email}`)
           .then(apiRes => {
             if (!apiRes.data.registered) {
               localStorage.removeItem('WORKSHOP');
@@ -351,7 +375,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     };
 
     try {
-      await axios.post(`https://remet-ai-nate.vercel.app/api/registration/${userId}`, registrationData, config);
+      await axios.post(`http://localhost:3000/api/registration/${userId}`, registrationData, config);
       localStorage.setItem('login', 'true');
       localStorage.setItem('WORKSHOP', 'true');
       closeModal();
@@ -426,6 +450,17 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 </a>
               </li>
             )}
+
+            {isLoggedIn && userRole === 'admin' && (
+              <li>
+                <a
+                  onClick={openPresenceModal} // 👈 MODIFIÉ: Appelle la nouvelle fonction
+                  style={{ cursor: "pointer", fontWeight: '900' }}
+                >
+                  Gestion de presonce
+                </a>
+              </li>
+            )}
           </ul>
         </div>
 
@@ -477,6 +512,16 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 </a>
               </li>
             )}
+            {isLoggedIn && userRole === 'admin' && (
+              <li>
+                <a
+                  onClick={openPresenceModal} // 👈 MODIFIÉ ici aussi
+                  style={{ cursor: "pointer", color: '#ffcc00', fontWeight: 'bold' }}
+                >
+                  Gestion de presonce
+                </a>
+              </li>
+            )}
 
             {!isLoggedIn ? (
               <>
@@ -525,7 +570,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 <span className="btn-glow"></span>
               </button>
 
-              <button className="login-button" onClick={openModal_login}   style={{ width: '100%', justifyContent: 'center', backgroundColor: '#e5e7eb', color: '#374151' }}>
+              <button className="login-button" onClick={openModal_login} style={{ width: '100%', justifyContent: 'center', backgroundColor: '#e5e7eb', color: '#374151' }}>
                 Log in
               </button>
             </div>
@@ -787,7 +832,9 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       {showAdminModal && (
         <Gestion_compte onClose={closeAdminModal} />
       )}
-
+{showPresenceModal && (
+    <PresenceManagement onClose={closePresenceModal} />
+)}
       {/* -------------------------------------------------------- */}
       {/* 🌟 MODAL 6: LOGOUT CONFIRMATION POPUP (نافذة التأكيد) 🌟 */}
       {/* -------------------------------------------------------- */}

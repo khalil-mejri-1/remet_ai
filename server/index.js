@@ -180,7 +180,7 @@ app.get('/api/check-registration/:email', async (req, res) => {
     try {
         const email = req.params.email;
         const existingUser = await Registration.findOne({ email });
-        res.json({ registered: !!existing
+        res.json({ registered: !!existingUser
           
          });
     } catch (error) {
@@ -240,14 +240,44 @@ app.post('/api/attendance/scan', async (req, res) => {
         if (!sessionId || !userId || !fullName || !email) 
             return res.status(400).json({ message: 'Tous les champs sont requis' });
 
+        // -----------------------------
+        // 1. Recherche de la session via Program
+        // -----------------------------
+        const program = await Program.findOne({ "sessions.id": Number(sessionId) });
+
+        if (!program)
+            return res.status(404).json({ message: "Session introuvable" });
+
+        const session = program.sessions.find(s => s.id === Number(sessionId));
+
+        if (!session)
+            return res.status(404).json({ message: "Session introuvable" });
+
+        // -----------------------------
+        // 2. Récupérer infos utilisateur depuis Registration
+        // -----------------------------
+        const registration = await Registration.findOne({ userId });
+
+        const userClass = registration ? registration.class : null;
+        const userPhone = registration ? registration.phone : null;
+
+        // -----------------------------
+        // 3. Préparer les données
+        // -----------------------------
         const attendanceObj = {
             userId,
-            sessionId, // مباشرة بدون بحث
+            sessionId,
+            nameSession: session.title,
+            timeSession: session.time,
             fullName,
             email,
-            class: null
+            class: userClass,
+            phone: userPhone   // <- اضافه الحقل هنا
         };
 
+        // -----------------------------
+        // 4. Enregistrer
+        // -----------------------------
         const attendance = await Attendance.create(attendanceObj);
 
         res.json({ 
@@ -258,7 +288,7 @@ app.post('/api/attendance/scan', async (req, res) => {
 
     } catch (err) {
         console.error("Scan Error:", err);
-        
+
         if (err.code === 11000) {
             return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
         }
@@ -266,6 +296,24 @@ app.post('/api/attendance/scan', async (req, res) => {
         res.status(500).json({ message: 'Erreur serveur', error: err.message });
     }
 });
+
+
+app.get('/api/attendance', async (req, res) => {
+    try {
+        // Fetch all attendance records from the database
+        const attendances = await Attendance.find().sort({ scanTime: -1 }); // sorted by latest scan
+
+        // Return the data as JSON
+        res.status(200).json(attendances);
+    } catch (error) {
+        console.error("Error fetching attendance:", error);
+        res.status(500).json({ message: "Internal server error while fetching attendance data." });
+    }
+});
+
+
+
+
 
 
 /* -----------------------
@@ -525,17 +573,49 @@ app.post('/api/program', async (req, res) => {
 app.put('/api/program/:day', async (req, res) => {
     try {
         const { sessions } = req.body;
+
+        // 1. Unique داخل القائمة نفسها
+        const ids = sessions.map(s => s.id);
+        const hasDuplicate = ids.some((id, idx) => ids.indexOf(id) !== idx);
+        if (hasDuplicate) {
+            return res.status(400).json({
+                message: "Session ID duplicated inside the same request."
+            });
+        }
+
+        // 2. Unique عالميًا في كل الأيام
+        for (let session of sessions) {
+            const exists = await Program.findOne({
+                "sessions.id": session.id,
+                day: { $ne: req.params.day } // استثناء اليوم نفسه
+            });
+
+            if (exists) {
+                return res.status(400).json({
+                    message: `Session ID ${session.id} is already used in another day.`
+                });
+            }
+        }
+
+        // 3. التحديث إذا كان كل شيء جيد
         const updated = await Program.findOneAndUpdate(
             { day: req.params.day },
             { sessions },
             { new: true }
         );
-        if (!updated) return res.status(404).json({ message: 'Day not found' });
+
+        if (!updated)
+            return res.status(404).json({ message: 'Day not found' });
+
         res.json(updated);
+
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: err.message });
     }
 });
+
+
 
 // Delete a day
 app.delete('/api/program/:day', async (req, res) => {
