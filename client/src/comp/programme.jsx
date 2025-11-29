@@ -172,7 +172,7 @@ export default function Programme() {
       console.log("📤 Sending payload:", payload);
 
       const response = await fetch(
-        "https://remet-ai-nate.vercel.app/api/attendance/scan",
+        "http://localhost:3000/api/attendance/scan",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -209,7 +209,7 @@ export default function Programme() {
     const encodedEmail = encodeURIComponent(userEmail);
 
     try {
-      const res = await fetch(`https://remet-ai-nate.vercel.app/api/user/role/${encodedEmail}`, {
+      const res = await fetch(`http://localhost:3000/api/user/role/${encodedEmail}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ export default function Programme() {
   // Fetch data from backend
   const fetchData = async () => {
     try {
-      const res = await fetch('https://remet-ai-nate.vercel.app/api/program');
+      const res = await fetch('http://localhost:3000/api/program');
       const programs = await res.json();
       const formatted = {};
       programs.forEach(p => formatted[p.day] = p.sessions);
@@ -273,7 +273,7 @@ export default function Programme() {
     }
 
     try {
-      const res = await fetch("https://remet-ai-nate.vercel.app/api/attendance/scan", {
+      const res = await fetch("http://localhost:3000/api/attendance/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -338,21 +338,54 @@ export default function Programme() {
   // openScanner appelle maintenant le modal de sélection pour le SCAN
   // openScanner appelle maintenant le modal de sélection pour le SCAN
   // openScanner vérifie le statut de connexion avant d'ouvrir le modal de sélection
-  const openScanner = (item) => { // Retire scanType des arguments, on le fixe plus tard
+  // ... (reste du code)
+
+  // openScanner vérifie le statut de connexion et le statut d'inscription au Workshop avant d'ouvrir le modal de sélection
+  const openScanner = async (item) => { // Ajout de 'async'
     const isUserLoggedIn = localStorage.getItem('login') === 'true';
+    const userEmail = localStorage.getItem('userEmail'); // Récupère l'email
 
     if (!isUserLoggedIn) {
-      // Si l'utilisateur n'est PAS connecté, afficher le modal d'alerte
+      // 1. CAS: L'utilisateur n'est PAS connecté.
       setShowAuthRequiredModal(true);
       lockScroll();
       return;
     }
 
-    // Si l'utilisateur est connecté, procéder au scan normal
+    // 2. CAS: L'utilisateur est connecté. On vérifie l'inscription au Workshop.
+    if (userEmail) {
+      try {
+        // Construction de l'URL avec l'email encodé
+        const encodedEmail = encodeURIComponent(userEmail);
+        const registrationRes = await fetch(`http://localhost:3000/api/check-registration/${encodedEmail}`);
+        const registrationData = await registrationRes.json();
+
+        if (!registrationRes.ok || registrationData.registered === false) {
+          // 3. CAS: L'utilisateur est connecté mais PAS enregistré au Workshop.
+          // Le modal du Workshop se trouve dans Navbar, on doit l'ouvrir via un événement ou un état global.
+          // Le plus simple ici est d'appeler la fonction 'openWorkshop' si elle était fournie par props,
+          // ou mieux, si elle est dans Programme.jsx, l'appeler.
+          // D'après vos composants, openWorkshop est défini dans Programme.jsx (bien que le modal Workshop soit dans Navbar).
+          // Supposons que vous souhaitez ouvrir le modal de Navbar. On utilise l'événement comme dans handleRedirectToAuth.
+          window.dispatchEvent(new Event('open-workshop-modal')); // 👈 NOUVEL ÉVÉNEMENT pour demander l'ouverture du modal de Workshop
+          lockScroll();
+          return;
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de l'inscription au workshop:", error);
+        // En cas d'erreur API, on suppose que l'utilisateur n'est pas enregistré pour des raisons de sécurité.
+        window.dispatchEvent(new Event('open-workshop-modal'));
+        lockScroll();
+        return;
+      }
+    }
+
+    // 4. CAS: L'utilisateur est connecté ET enregistré au Workshop. On procède au scan.
     setSelectedId(item.id);
-    // setCurrentScanType('entry'); // On ne définit plus ici, EntryExitModal s'en occupe
-    openEntryExitModal();          // Ouvre le modal de sélection Entrée/Sortie (qui est déjà `EntryExitModal`)
+    openEntryExitModal();          // Ouvre le modal de sélection Entrée/Sortie (EntryExitModal)
   };
+
+  // ... (reste du code)
 
 
   // ... dans Programme()
@@ -404,7 +437,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!newDayName) return;
-    const res = await fetch('https://remet-ai-nate.vercel.app/api/program', {
+    const res = await fetch('http://localhost:3000/api/program', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ day: newDayName })
@@ -420,7 +453,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!dayToRemove) return;
-    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
+    const res = await fetch(`http://localhost:3000/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
     if (res.ok) {
       fetchData();
       setIsRemoveDayModalOpen(false);
@@ -432,7 +465,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     const updatedSessions = [...(data[activeDay] || []), newSession];
-    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+    const res = await fetch(`http://localhost:3000/api/program/${encodeURIComponent(activeDay)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessions: updatedSessions })
@@ -453,7 +486,7 @@ export default function Programme() {
         sess.id === currentItem.id ? currentItem : sess
       );
 
-      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`http://localhost:3000/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
@@ -472,7 +505,7 @@ export default function Programme() {
     if (!isAdmin) return; // Sécurité côté client
     if (window.confirm("Supprimer cet élément du programme ?")) {
       const updatedSessions = data[activeDay].filter(item => item.id !== itemId);
-      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`http://localhost:3000/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })

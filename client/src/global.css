@@ -1044,6 +1044,8 @@ section[id] {
 .speaker-details {
   padding: 1.5rem;
   text-align: left;
+position: relative;
+background-color: white;
 }
 
 .speaker-name {
@@ -3956,3 +3958,6 @@ width: 300px;
     border: 1px solid #ccc;
     box-shadow: none;
 }
+
+
+

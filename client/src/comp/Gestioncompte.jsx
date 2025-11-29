@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'; // 👈 استير�
 import axios from 'axios';
 import { FaUserShield, FaSearch, FaTimes, FaSpinner } from 'react-icons/fa';
 
-const API_BASE_URL = 'https://remet-ai-nate.vercel.app/admin/users';
+const API_BASE_URL = 'http://localhost:3000/admin/users';
 
 const Gestion_compte = ({ onClose }) => {
     // سنستخدم 'allUsers' لتخزين القائمة الكاملة التي تم جلبها من الـ API
@@ -92,8 +92,23 @@ const Gestion_compte = ({ onClose }) => {
     const styles = {
         overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 },
         modal: { backgroundColor: '#fff', borderRadius: '10px', padding: '30px', width: '90%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' },
-        closeButton: { position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' },
-        header: { borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' },
+  closeButton: { 
+        background: '#000000ff', // Rouge/Noir pour la fermeture
+        color: '#fff', 
+        border: 'none', 
+        borderRadius: '50%', 
+        width: '32px', 
+        position:"absolute",
+        height: '32px', 
+        right:"30px",
+        top:"10px",
+        cursor: 'pointer', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        transition: 'background 0.3s'
+        // Idéalement, ajouter un hover: '&:hover': { background: '#c82333' }
+    },        header: { borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' },
         searchForm: { display: 'flex', gap: '10px', marginBottom: '20px' },
         searchInput: { flexGrow: 1, padding: '10px', borderRadius: '5px', border: '1px solid #ccc' },
         searchButton: { padding: '10px 15px', borderRadius: '5px', border: 'none', backgroundColor: '#0f172a', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' },
