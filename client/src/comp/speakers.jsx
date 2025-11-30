@@ -31,8 +31,8 @@ const XIcon = () => (
 );
 
 // ===== URL BASE API =====
-const API_URL = "http://localhost:3000/api/speakers";
-  const USER_ROLE_CHECK_URL = "http://localhost:3000/api/user/role";
+const API_URL = "https://remet-ai-nate.vercel.app/api/speakers";
+  const USER_ROLE_CHECK_URL = "https://remet-ai-nate.vercel.app/api/user/role";
 
 
 // ===== Speaker Card Component (Non modifié) =====
@@ -208,10 +208,10 @@ export default function Speakers() {
          <img src=""  className="speaker-real-img" /> 
       </div>
 
-     <div class="speaker-details">
-    <h3 class="speaker-name loading-skeleton"></h3>
-    <p class="speaker-title loading-skeleton"></p>
-    <p class="speaker-description loading-skeleton"></p>
+     <div className="speaker-details">
+    <h3 className="speaker-name loading-skeleton"></h3>
+    <p className="speaker-title loading-skeleton"></p>
+    <p className="speaker-description loading-skeleton"></p>
 </div>
       
     </div>

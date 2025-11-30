@@ -25,7 +25,7 @@ export default function PresenceManagement({ onClose }) {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await axios.get('http://localhost:3000/api/attendance');
+            const response = await axios.get('https://remet-ai-nate.vercel.app/api/attendance');
             setAttendances(response.data);
         } catch (err) {
             console.error(err);
