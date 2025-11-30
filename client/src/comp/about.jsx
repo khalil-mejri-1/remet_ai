@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 // Configuration API URL (Make sure your Node server is running on port 5000)
 // Nous allons ajouter un endpoint pour vérifier le rôle de l'utilisateur par email.
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://remet-ai-nate.vercel.app/api';
 
 const About = () => {
   // --- STATE ---
@@ -268,8 +268,8 @@ const About = () => {
 
          <div style={{maxWidth:"400px",margin:"auto", border:"red solid 0px"}}>
 
-         <h3 class="speaker-name loading-skeleton"></h3>
-                <p class="speaker-title loading-skeleton"></p>
+         <h3 className="speaker-name loading-skeleton"></h3>
+                <p className="speaker-title loading-skeleton"></p>
 </div>
                 <div className="ab-social-dots">
                   <span></span><span></span><span></span>
@@ -285,8 +285,8 @@ const About = () => {
                 </div>
 <div style={{maxWidth:"400px",margin:"auto", border:"red solid 0px"}}>
 
-         <h3 class="speaker-name loading-skeleton"></h3>
-                <p class="speaker-title loading-skeleton"></p>
+         <h3 className="speaker-name loading-skeleton"></h3>
+                <p className="speaker-title loading-skeleton"></p>
 </div>
          
 

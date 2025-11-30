@@ -172,7 +172,7 @@ export default function Programme() {
       console.log("📤 Sending payload:", payload);
 
       const response = await fetch(
-        "http://localhost:3000/api/attendance/scan",
+        "https://remet-ai-nate.vercel.app/api/attendance/scan",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -209,7 +209,7 @@ export default function Programme() {
     const encodedEmail = encodeURIComponent(userEmail);
 
     try {
-      const res = await fetch(`http://localhost:3000/api/user/role/${encodedEmail}`, {
+      const res = await fetch(`https://remet-ai-nate.vercel.app/api/user/role/${encodedEmail}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -235,7 +235,7 @@ export default function Programme() {
   // Fetch data from backend
   const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/program');
+      const res = await fetch('https://remet-ai-nate.vercel.app/api/program');
       const programs = await res.json();
       const formatted = {};
       programs.forEach(p => formatted[p.day] = p.sessions);
@@ -273,7 +273,7 @@ export default function Programme() {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/attendance/scan", {
+      const res = await fetch("https://remet-ai-nate.vercel.app/api/attendance/scan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -357,7 +357,7 @@ export default function Programme() {
       try {
         // Construction de l'URL avec l'email encodé
         const encodedEmail = encodeURIComponent(userEmail);
-        const registrationRes = await fetch(`http://localhost:3000/api/check-registration/${encodedEmail}`);
+        const registrationRes = await fetch(`https://remet-ai-nate.vercel.app/api/check-registration/${encodedEmail}`);
         const registrationData = await registrationRes.json();
 
         if (!registrationRes.ok || registrationData.registered === false) {
@@ -437,7 +437,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!newDayName) return;
-    const res = await fetch('http://localhost:3000/api/program', {
+    const res = await fetch('https://remet-ai-nate.vercel.app/api/program', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ day: newDayName })
@@ -453,7 +453,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     if (!dayToRemove) return;
-    const res = await fetch(`http://localhost:3000/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
+    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(dayToRemove)}`, { method: 'DELETE' });
     if (res.ok) {
       fetchData();
       setIsRemoveDayModalOpen(false);
@@ -465,7 +465,7 @@ export default function Programme() {
     e.preventDefault();
     if (!isAdmin) return; // Sécurité côté client
     const updatedSessions = [...(data[activeDay] || []), newSession];
-    const res = await fetch(`http://localhost:3000/api/program/${encodeURIComponent(activeDay)}`, {
+    const res = await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessions: updatedSessions })
@@ -486,7 +486,7 @@ export default function Programme() {
         sess.id === currentItem.id ? currentItem : sess
       );
 
-      await fetch(`http://localhost:3000/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
@@ -505,7 +505,7 @@ export default function Programme() {
     if (!isAdmin) return; // Sécurité côté client
     if (window.confirm("Supprimer cet élément du programme ?")) {
       const updatedSessions = data[activeDay].filter(item => item.id !== itemId);
-      await fetch(`http://localhost:3000/api/program/${encodeURIComponent(activeDay)}`, {
+      await fetch(`https://remet-ai-nate.vercel.app/api/program/${encodeURIComponent(activeDay)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessions: updatedSessions })
