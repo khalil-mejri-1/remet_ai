@@ -2,25 +2,23 @@ import React, { useState, useEffect } from 'react';
 import logo from "../img/logo.png";
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
-import { FiLogOut } from "react-icons/fi";
-import { FaCheckCircle } from "react-icons/fa";
-import Gestion_compte from './Gestioncompte';
-import PresenceManagement from './PresenceManagement.jsx'; // 👈 NOUVEL IMPORT (Créé à l'étape 2)
-// تعريف الـ URL الخاص بالتحقق من الدور
-const ROLE_API_URL = 'https://remet-ai-nate.vercel.app/api/user/role/';
+import { useNavigate } from 'react-router-dom';
+import { FiLogOut, FiLayout, FiUsers, FiCheckSquare, FiCheckCircle } from "react-icons/fi";
+import API_BASE_URL from '../config';
+const ROLE_API_URL = `${API_BASE_URL}/api/user/role/`;
 
 export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop, onAuthUpdate }) {
-
+  const navigate = useNavigate();
   // --- UI States ---
   const [isOpen, setIsOpen] = useState(false);
-  const [showModal_register, setShowModal_register] = useState(false);
-  const [showModal_login, setShowModal_login] = useState(false);
+  const [authMode, setAuthMode] = useState(null); // 'login' | 'register' | null
   const [showAuthAlert, setShowAuthAlert] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   // 🌟 حالة جديدة لتأكيد تسجيل الخروج 🌟
   const [showPresenceModal, setShowPresenceModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDashboardDropdown, setShowDashboardDropdown] = useState(false);
 
   // --- Auth State ---
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('login') === 'true');
@@ -28,7 +26,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
   // --- Workshop Form State ---
   const [workshopForm, setWorkshopForm] = useState({
-    fullname: '', email: '', institution: '', level: '', phone: ''
+    fullname: '', email: '', institution: '', level: '', phone: '', isProfessor: false
   });
 
   // --- Login/Register Form States ---
@@ -39,13 +37,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   });
 
   const openPresenceModal = () => {
-    setShowPresenceModal(true);
+    navigate('/presence');
     setIsOpen(false);
-    lockScroll();
-  };
-  const closePresenceModal = () => {
-    setShowPresenceModal(false);
-    unlockScroll();
   };
 
 
@@ -55,29 +48,33 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
   const openModal = () => { if (onOpenWorkshop) onOpenWorkshop(); setIsOpen(false); };
   const closeModal = () => { if (onCloseWorkshop) onCloseWorkshop(); };
-  const openAdminModal = () => { setShowAdminModal(true); setIsOpen(false); lockScroll(); };
+  const openAdminModal = () => { navigate('/users'); setIsOpen(false); };
+  const openRegistrationsModal = () => { navigate('/workshop-registrations'); setIsOpen(false); };
   const closeAdminModal = () => { setShowAdminModal(false); unlockScroll(); };
 
   // Update existing openers to ensure they close alerts if open
   const openModal_register = () => {
     setShowAuthAlert(false);
     setShowSuccessAlert(false);
-    setShowModal_register(true);
-    setShowModal_login(false);
+    setAuthMode('register');
     setIsOpen(false);
     lockScroll();
   };
-  const closeModal_register = () => { setShowModal_register(false); unlockScroll(); };
+  const closeModal_register = () => { setAuthMode(null); unlockScroll(); };
 
   const openModal_login = () => {
     setShowAuthAlert(false);
     setShowSuccessAlert(false);
-    setShowModal_login(true);
-    setShowModal_register(false);
+    setAuthMode('login');
     setIsOpen(false);
     lockScroll();
   };
-  const closeModal_login = () => { setShowModal_login(false); unlockScroll(); };
+  const closeModal_login = () => { setAuthMode(null); unlockScroll(); };
+
+  const closeAuthModal = () => {
+    setAuthMode(null);
+    unlockScroll();
+  };
 
   // 🌟 دالة إغلاق نافذة تأكيد تسجيل الخروج 🌟
   const closeLogoutConfirmModal = () => {
@@ -196,7 +193,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         let token;
         try {
-          const res = await axios.post('https://remet-ai-nate.vercel.app/api/google-login', {
+          const res = await axios.post(`${API_BASE_URL}/api/google-login`, {
             fullName: userData.name,
             email: userData.email
           });
@@ -227,7 +224,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         closeModal_register();
 
         setTimeout(() => {
-          axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${userData.email}`)
+          axios.get(`${API_BASE_URL}/api/check-registration/${userData.email}`)
             .then(res => {
               if (!res.data.registered) {
                 localStorage.removeItem('WORKSHOP');
@@ -252,12 +249,12 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("Les mots de passe ne correspondent pas !");
+      alert("Passwords do not match!");
       return;
     }
 
     try {
-      const res = await axios.post('https://remet-ai-nate.vercel.app/api/register', {
+      const res = await axios.post(`${API_BASE_URL}/api/register`, {
         fullName: formData.fullname,
         email: formData.email,
         password: formData.password
@@ -284,13 +281,13 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         email: formData.email
       }));
 
-      alert("Compte créé avec succès !");
+      alert("Account created successfully!");
       localStorage.removeItem('WORKSHOP');
       setTimeout(() => { openModal(); }, 500);
 
     } catch (error) {
       console.error("Registration Error:", error);
-      alert(error.response?.data?.message || "Erreur lors de l'inscription");
+      alert(error.response?.data?.message || "Registration error");
     }
   };
 
@@ -300,7 +297,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('https://remet-ai-nate.vercel.app/api/login', {
+      const res = await axios.post(`${API_BASE_URL}/api/login`, {
         email: email,
         password: password
       });
@@ -327,7 +324,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       closeModal_login();
 
       setTimeout(() => {
-        axios.get(`https://remet-ai-nate.vercel.app/api/check-registration/${email}`)
+        axios.get(`${API_BASE_URL}/api/check-registration/${email}`)
           .then(apiRes => {
             if (!apiRes.data.registered) {
               localStorage.removeItem('WORKSHOP');
@@ -341,7 +338,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
     } catch (error) {
       console.error("Login Error:", error);
-      alert("Email ou mot de passe incorrect");
+      alert("Incorrect email or password");
     }
   };
 
@@ -355,7 +352,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     const userId = localStorage.getItem('userId');
 
     if (!userId) {
-      alert("Erreur: ID utilisateur introuvable. Veuillez vous reconnecter.");
+      alert("Error: User ID not found. Please log in again.");
       return;
     }
 
@@ -363,7 +360,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       fullName: workshopForm.fullname,
       email: workshopForm.email,
       institution: workshopForm.institution,
-      class: workshopForm.level,
+      class: workshopForm.isProfessor ? "Professor" : workshopForm.level,
       phone: workshopForm.phone
     };
 
@@ -375,22 +372,27 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
     };
 
     try {
-      await axios.post(`https://remet-ai-nate.vercel.app/api/registration/${userId}`, registrationData, config);
+      await axios.post(`${API_BASE_URL}/api/registration/${userId}`, registrationData, config);
       localStorage.setItem('login', 'true');
       localStorage.setItem('WORKSHOP', 'true');
       closeModal();
-      alert("Inscription confirmée avec succès !");
+      alert("Registration confirmed successfully!");
       window.location.reload();
     } catch (error) {
       console.error(error);
-      const errorMsg = error.response?.data?.message || "Erreur lors de l'inscription.";
+      const errorMsg = error.response?.data?.message || "Error during registration.";
       alert(errorMsg);
     }
   };
 
   const handleWorkshopChange = (e) => {
-    const { name, value } = e.target;
-    setWorkshopForm(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setWorkshopForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+      // If switching to professor, clear level or set it but disabling UI is what user asked
+      level: (name === 'isProfessor' && checked) ? '' : (name === 'level' ? value : prev.level)
+    }));
   };
 
   // 🌟 دالة تسجيل الخروج الفعلية 🌟
@@ -405,7 +407,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
     setIsLoggedIn(false);
     setUserRole(null);
-    setWorkshopForm({ fullname: '', email: '', institution: '', level: '', phone: '' });
+    setWorkshopForm({ fullname: '', email: '', institution: '', level: '', phone: '', isProfessor: false });
 
     if (onAuthUpdate) onAuthUpdate();
 
@@ -436,31 +438,10 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         <div className='desktop-links-wrapper'>
           <ul className="navbar-links">
-            <li><a href="#about">ABOUT</a></li>
-            <li><a href="#speakers">SPEAKERS</a></li>
-            <li><a href="#key-sessions">KEY SESSIONS</a></li>
-            <li><a href="#program">PROGRAM</a></li>
-            {isLoggedIn && userRole === 'admin' && (
-              <li>
-                <a
-                  onClick={openAdminModal}
-                  style={{ cursor: "pointer", fontWeight: '900' }}
-                >
-                  Gestion de compte
-                </a>
-              </li>
-            )}
-
-            {isLoggedIn && userRole === 'admin' && (
-              <li>
-                <a
-                  onClick={openPresenceModal} // 👈 MODIFIÉ: Appelle la nouvelle fonction
-                  style={{ cursor: "pointer", fontWeight: '900' }}
-                >
-                  Gestion de presonce
-                </a>
-              </li>
-            )}
+            <li><a href="#about">About</a></li>
+            <li><a href="#speakers">Speakers</a></li>
+            <li><a href="#key-sessions">Key Sessions</a></li>
+            <li><a href="#program">Program</a></li>
           </ul>
         </div>
 
@@ -468,24 +449,53 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           {!isLoggedIn ? (
             <>
               <button className="nav-register-btn" onClick={openModal_register}>
-                S'inscrire
-                <span className="btn-glow"></span>
+                Create Account
               </button>
               <div className="navbar-login">
-                <button className="login-button" onClick={openModal_login}>Log in</button>
+                <button className="login-button" onClick={openModal_login}>Sign In</button>
               </div>
             </>
           ) : (
-            <div className="navbar-login">
-              {/* 🌟 استدعاء الدالة الجديدة لفتح التأكيد 🌟 */}
-              <button
-                className="login-button"
-                onClick={handleLogout}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <FiLogOut size={20} />
-                Log out
-              </button>
+            <div className="navbar-logged-actions">
+              {isLoggedIn && userRole === 'admin' && (
+                <div className="dashboard-dropdown-container">
+                  <button
+                    className="nav-dashboard-btn"
+                    onClick={() => setShowDashboardDropdown(!showDashboardDropdown)}
+                  >
+                    <FiLayout size={18} />
+                    Dashboard
+                  </button>
+
+                  {showDashboardDropdown && (
+                    <div className="dashboard-dropdown">
+                      <button onClick={() => { openAdminModal(); setShowDashboardDropdown(false); }}>
+                        <FiUsers size={16} />
+                        Account Management
+                      </button>
+                      <button onClick={() => { openPresenceModal(); setShowDashboardDropdown(false); }}>
+                        <FiCheckSquare size={16} />
+                        Presence Management
+                      </button>
+                      <button onClick={() => { openRegistrationsModal(); setShowDashboardDropdown(false); }}>
+                        <FiUsers size={16} />
+                        Workshop Registrations
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="navbar-login">
+                <button
+                  className="login-button"
+                  onClick={handleLogout}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <FiLogOut size={20} />
+                  Sign Out
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -498,109 +508,125 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
         <div className={`mobile-menu-overlay ${isOpen ? 'open' : ''}`}>
           <ul className="mobile-links">
-            <li><a href="#about" onClick={toggleMenu}>ABOUT</a></li>
-            <li><a href="#key-sessions" onClick={toggleMenu}>KEY SESSIONS</a></li>
-            <li><a href="#speakers" onClick={toggleMenu}>SPEAKERS</a></li>
-            <li><a href="#program" onClick={toggleMenu}>PROGRAM</a></li>
-            {isLoggedIn && userRole === 'admin' && (
-              <li>
-                <a
-                  onClick={openAdminModal}
-                  style={{ cursor: "pointer", color: '#ffcc00', fontWeight: 'bold' }}
-                >
-                  Gestion de compte
-                </a>
-              </li>
-            )}
-            {isLoggedIn && userRole === 'admin' && (
-              <li>
-                <a
-                  onClick={openPresenceModal} // 👈 MODIFIÉ ici aussi
-                  style={{ cursor: "pointer", color: '#ffcc00', fontWeight: 'bold' }}
-                >
-                  Gestion de presonce
-                </a>
-              </li>
-            )}
+            <li><a href="#about" onClick={toggleMenu}>About</a></li>
+            <li><a href="#key-sessions" onClick={toggleMenu}>Key Sessions</a></li>
+            <li><a href="#speakers" onClick={toggleMenu}>Speakers</a></li>
+            <li><a href="#program" onClick={toggleMenu}>Program</a></li>
 
             {!isLoggedIn ? (
               <>
                 <li>
-                  <button className="nav-register-btn" onClick={openModal_register}>
-                    S'inscrire
+                  <button className="nav-register-btn" onClick={openModal_register} style={{ width: '100%', justifyContent: 'center' }}>
+                    Create Account
                   </button>
                 </li>
                 <li className="mobile-login-item">
-                  <button className="login-button" onClick={openModal_login}>Log in</button>
+                  <button className="login-button" onClick={openModal_login} style={{ width: '100%', justifyContent: 'center' }}>Sign In</button>
                 </li>
               </>
             ) : (
-              <li className="mobile-login-item">
-                {/* 🌟 استدعاء الدالة الجديدة لفتح التأكيد 🌟 */}
-                <button
-                  className="login-button"
-                  onClick={handleLogout}
-                  style={{ backgroundColor: '#dc3545', width: '100%', marginTop: '10px', color: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  <FiLogOut size={20} />
-                  Log out
-                </button>
-              </li>
+              <>
+                {isLoggedIn && userRole === 'admin' && (
+                  <>
+                    <li>
+                      <button className="nav-dashboard-btn" onClick={openAdminModal} style={{ width: '100%', justifyContent: 'center', marginBottom: '10px' }}>
+                        <FiUsers size={18} />
+                        Account Management
+                      </button>
+                    </li>
+                    <li>
+                      <button className="nav-dashboard-btn" onClick={openPresenceModal} style={{ width: '100%', justifyContent: 'center', marginBottom: '10px' }}>
+                        <FiCheckSquare size={18} />
+                        Presence Management
+                      </button>
+                    </li>
+                    <li>
+                      <button className="nav-dashboard-btn" onClick={openRegistrationsModal} style={{ width: '100%', justifyContent: 'center', marginBottom: '10px' }}>
+                        <FiUsers size={18} />
+                        Workshop Registrations
+                      </button>
+                    </li>
+                  </>
+                )}
+                <li className="mobile-login-item">
+                  <button
+                    className="login-button"
+                    onClick={handleLogout}
+                    style={{ backgroundColor: '#dc3545', width: '100%', marginTop: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <FiLogOut size={20} />
+                    Sign Out
+                  </button>
+                </li>
+              </>
             )}
           </ul>
         </div>
       </nav>
 
-      {/* --- MODALE 4 : AUTH ALERT POPUP (لم تتغير) --- */}
+      {/* --- MODALE 4 : AUTH ALERT POPUP --- */}
       {showAuthAlert && (
         <div className="rm-overlay" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>
-          <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
-            <button className="rm-close-btn" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>×</button>
+          <div className="rm-modal-container rm-modal-small" onClick={(e) => e.stopPropagation()}>
+            <div className="rm-modal-body" style={{ padding: '2.5rem' }}>
+              <button className="rm-close-btn" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>×</button>
 
-            <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🔒</div>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
 
-            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Connexion Requise</h2>
-            <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
-              Pour vous inscrire à remetAI, vous devez d'abord vous connecter ou créer un compte.
-            </p>
+              <h2 style={{ marginBottom: '0.75rem', color: '#0f172a' }}>Login Required</h2>
+              <p style={{ marginBottom: '2rem', color: '#64748b', lineHeight: '1.5' }}>
+                To register for RemetAI, you must first log in or create an account.
+              </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-              <button className="nav-register-btn" onClick={openModal_register} style={{ width: '100%', justifyContent: 'center' }}>
-                S'inscrire
-                <span className="btn-glow"></span>
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                <button className="nav-register-btn" onClick={openModal_register} style={{ width: '100%', justifyContent: 'center' }}>
+                  Create Account
+                </button>
 
-              <button className="login-button" onClick={openModal_login} style={{ width: '100%', justifyContent: 'center', backgroundColor: '#e5e7eb', color: '#374151' }}>
-                Log in
-              </button>
+                <button className="login-button" onClick={openModal_login} style={{ width: '100%', justifyContent: 'center', backgroundColor: '#e5e7eb', color: '#374151' }}>
+                  Sign In
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* --- NEW MODALE 5 : ALREADY REGISTERED (SUCCESS) POPUP (لم تتغير) --- */}
+      {/* --- NEW MODALE 5 : ALREADY REGISTERED (SUCCESS) POPUP --- */}
       {showSuccessAlert && (
         <div className="rm-overlay" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>
-          <div className="rm-modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}>
-            <button className="rm-close-btn" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>×</button>
+          <div className="rm-modal-container" style={{ maxWidth: '420px', borderRadius: '24px', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+            <div className="rm-modal-body" style={{ padding: '3rem 2.5rem', textAlign: 'center' }}>
+              <button className="rm-close-btn" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>×</button>
 
-            <div style={{ color: '#22c55e', fontSize: '4rem', marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
-              <FaCheckCircle />
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'rgba(34, 197, 94, 0.1)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                color: '#22c55e'
+              }}>
+                <FiCheckCircle size={40} />
+              </div>
+
+              <h2 style={{ marginBottom: '1rem', color: '#0f172a', fontSize: '1.75rem', fontWeight: '800' }}>Registration Confirmed</h2>
+              <p style={{ marginBottom: '2.5rem', color: '#64748b', lineHeight: '1.6', fontSize: '1rem' }}>
+                You are already a participant of the <strong style={{ color: '#0f172a' }}>REMET-AI</strong> workshop.<br />
+                We can't wait to see you there!
+              </p>
+
+              <button
+                className="ai-btn-primary"
+                onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}
+                style={{ width: '100%', justifyContent: 'center', padding: '14px', borderRadius: '14px' }}
+              >
+                Got it, thanks!
+              </button>
             </div>
-
-            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Congratulations !</h2>
-            <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.5' }}>
-              You are already registered for the REMET-AI workshop.<br />
-              We look forward to seeing you!
-            </p>
-
-            <button
-              className="login-button"
-              onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}
-              style={{ width: '100%', border: '1px solid #e2e8f0', justifyContent: 'center', backgroundColor: '#0f172a', color: 'black' }}
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
@@ -611,18 +637,18 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()}>
             <button className="rm-close-btn" onClick={closeModal}>×</button>
             <div className="rm-modal-header">
-              <h2>Rejoignez REMET-AI</h2>
-              <p>Remplissez ce formulaire pour valider votre place au workshop.</p>
+              <h2>Join REMET-AI</h2>
+              <p>Fill out this form to confirm your workshop spot.</p>
             </div>
 
             <form className="rm-form" onSubmit={handleWorkshopSubmit}>
               <div className="rm-input-group">
-                <label>Nom complet</label>
-                <input type="text" name="fullname" placeholder="Ex: Jean Dupont" value={workshopForm.fullname} onChange={handleWorkshopChange} required />
+                <label>Full Name</label>
+                <input type="text" name="fullname" placeholder="Ex: Full Name" value={workshopForm.fullname} onChange={handleWorkshopChange} required />
               </div>
 
               <div className="rm-input-group">
-                <label>Email académique</label>
+                <label>Academic Email</label>
                 <input
                   type="email"
                   name="email"
@@ -634,207 +660,196 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 />
               </div>
 
+              <div className="rm-input-group" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#4b5563' }}>
+                  <input
+                    type="checkbox"
+                    name="isProfessor"
+                    checked={workshopForm.isProfessor}
+                    onChange={handleWorkshopChange}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  Register as a Professor
+                </label>
+              </div>
+
               <div className="rm-row">
                 <div className="rm-input-group">
-                  <label>Institution / Faculté</label>
-                  <input type="text" name="institution" placeholder="ENIS, FSEG..." value={workshopForm.institution} onChange={handleWorkshopChange} required />
+                  <label>Institution / Faculty</label>
+                  <input type="text" name="institution" placeholder="FST-SBZ" value={workshopForm.institution} onChange={handleWorkshopChange} required />
                 </div>
                 <div className="rm-input-group">
-                  <label>Classe / Niveau</label>
-                  <input type="text" name="level" placeholder="Ex: 2ème Année" value={workshopForm.level} onChange={handleWorkshopChange} required />
+                  <label>Class / Level</label>
+                  <input
+                    type="text"
+                    name="level"
+                    placeholder={workshopForm.isProfessor ? "N/A" : "Ex: 3rd Year"}
+                    value={workshopForm.isProfessor ? "Professor" : workshopForm.level}
+                    onChange={handleWorkshopChange}
+                    required={!workshopForm.isProfessor}
+                    disabled={workshopForm.isProfessor}
+                    style={workshopForm.isProfessor ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed', color: '#9ca3af' } : {}}
+                  />
                 </div>
               </div>
               <div className="rm-input-group">
-                <label>Numéro de téléphone</label>
+                <label>Phone Number</label>
                 <input type="tel" name="phone" placeholder="+216 00 000 000" value={workshopForm.phone} onChange={handleWorkshopChange} required />
               </div>
               <button type="submit" className="rm-submit-btn">
-                Confirmer l'inscription
+                Confirm Registration
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* --- MODALE 2 : REGISTER (لم تتغير) --- */}
-      {showModal_register && (
-        <div className="rm-overlay" onClick={closeModal_register}>
-          <div className="rm-modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="re-page-container">
-              <div className="re-content-wrapper">
-                <div className="re-visual-side">
-                  <img
-                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
-                    alt="Future Tech"
-                    className="re-bg-image"
-                  />
-                  <div className="re-overlay"></div>
-                  <div className="re-glass-card">
-                    <div className="re-card-icon">💎</div>
-                    <h3>Devenez Membre VIP</h3>
-                    <p>Débloquez l'accès complet aux conférences.</p>
-                  </div>
-                </div>
-
-                <div className="re-form-side">
-                  <button
-                    className="rm-close-btn"
-                    onClick={closeModal_register}
-                    style={{ background: 'black', color: '#e7e7e7ff' }}
-                  >
-                    ×
-                  </button>
-                  <div className="re-header">
-                    <h1 className="re-title">Créer un compte</h1>
-                    <p className="re-subtitle">Rejoignez la communauté.</p>
-                  </div>
-
-                  <form className="re-form" onSubmit={handleRegisterSubmit}>
-                    <div className="re-input-group">
-                      <label>Nom complet</label>
-                      <div className="re-input-wrapper">
-                        <input type="text" name="fullname" placeholder="Votre nom" value={formData.fullname} onChange={handleChange} required />
-                        <span className="re-icon">👤</span>
-                      </div>
-                    </div>
-                    <div className="re-input-group">
-                      <label>Email professionnel</label>
-                      <div className="re-input-wrapper">
-                        <input type="email" name="email" placeholder="nom@tech.com" value={formData.email} onChange={handleChange} required />
-                        <span className="re-icon">✉️</span>
-                      </div>
-                    </div>
-                    <div className="re-row">
-                      <div className="re-input-group">
-                        <label>Mot de passe</label>
-                        <div className="re-input-wrapper">
-                          <input type="password" name="password" placeholder="••••••" value={formData.password} onChange={handleChange} required />
-                          <span className="re-icon">🔒</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="re-row">
-                      <div className="re-input-group">
-                        <label>Conform Mot de passe</label>
-                        <div className="re-input-wrapper">
-                          <input type="password" name="confirmPassword" placeholder="••••••" value={formData.confirmPassword} onChange={handleChange} required />
-                          <span className="re-icon">🔒</span>
-                        </div>
-                      </div>
-                    </div>
-                    <button type="submit" className="re-submit-btn">
-                      Commencer l'aventure
-                      <span className="re-shine"></span>
-                    </button>
-                  </form>
-
-                  <p className="re-footer">
-                    Déjà membre ? <button onClick={openModal_login} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}>Connectez-vous</button>
-                  </p>
-                  <div className="lo-divider">
-                    <span>Ou continuer avec</span>
-                  </div>
-                  <div className="lo-social-buttons">
-                    <button
-                      type="button"
-                      className="lo-social-btn google"
-                      onClick={() => loginToGoogle()}
-                    >
-                      <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
-                      Google
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- MODALE 3 : LOGIN (لم تتغير) --- */}
-      {showModal_login && (
-        <div className="rm-overlay" onClick={closeModal_login}>
+      {/* --- MODALE UNIFIÉE : AUTH (LOGIN & REGISTER) --- */}
+      {authMode && (
+        <div className="rm-overlay" onClick={closeAuthModal}>
           <div className="rm-modal-container" onClick={(e) => e.stopPropagation()}>
             <button
               className="rm-close-btn"
-              onClick={closeModal_login}
-              style={{ background: 'white', color: '#0f172a' }}
+              onClick={closeAuthModal}
+              style={{ background: authMode === 'login' ? 'white' : 'black', color: authMode === 'login' ? '#0f172a' : '#e7e7e7' }}
             >
               ×
             </button>
-            <div className="lo-page-container">
-              <div className="lo-content-wrapper">
-                <div className="lo-form-side">
-                  <div className="lo-header">
-                    <div className="lo-logo-mark">AI</div>
-                    <h1 className="lo-title">Bon retour !</h1>
-                    <p className="lo-subtitle">Entrez vos identifiants.</p>
-                  </div>
 
-                  <form onSubmit={handleLoginSubmit} className="lo-form">
-                    <div className="lo-input-group">
-                      <label htmlFor="email">Email professionnel</label>
-                      <div className="lo-input-wrapper">
-                        <input type="email" id="email" placeholder="nom@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                        <span className="lo-input-icon">✉️</span>
-                      </div>
-                    </div>
-                    <div className="lo-input-group">
-                      <label htmlFor="password">Mot de passe</label>
-                      <div className="lo-input-wrapper">
-                        <input type="password" id="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        <span className="lo-input-icon">🔒</span>
-                      </div>
-                    </div>
-                    <button type="submit" className="lo-submit-btn">
-                      Se connecter
-                      <span className="lo-btn-arrow">→</span>
-                    </button>
-                  </form>
+            <div className={`auth-fade-container auth-form-animate ${authMode === 'login' ? 'lo-page-container' : 're-page-container'}`} key={authMode}>
+              <div className={authMode === 'login' ? 'lo-content-wrapper' : 're-content-wrapper'}>
 
-                  <p className="lo-footer-text">
-                    Pas encore de compte ?
-                    <button onClick={openModal_register} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Inscrivez-vous</button>
-                  </p>
-                  <div className="lo-divider">
-                    <span>Ou continuer avec</span>
+                {/* --- Lado Esquerdo (Visual para Register, Form para Login) --- */}
+                {authMode === 'register' ? (
+                  <div className="re-visual-side">
+                    <img
+                      src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
+                      alt="Future Tech"
+                      className="re-bg-image"
+                    />
                   </div>
-                  <div className="lo-social-buttons">
-                    <button
-                      type="button"
-                      className="lo-social-btn google"
-                      onClick={() => loginToGoogle()}
-                    >
-                      <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
-                      Google
-                    </button>
+                ) : (
+                  <div className="lo-form-side">
+                    <div className="lo-header">
+                      <div className="lo-logo-mark">AI</div>
+                      <h1 className="lo-title">Sign In</h1>
+                      <p className="lo-subtitle">Access your account.</p>
+                    </div>
+
+                    <form onSubmit={handleLoginSubmit} className="lo-form">
+                      <div className="lo-input-group">
+                        <label htmlFor="email">Email</label>
+                        <div className="lo-input-wrapper">
+                          <input type="email" id="email" placeholder="name@fstsbz.rnu.tn" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                          <span className="lo-input-icon">✉️</span>
+                        </div>
+                      </div>
+                      <div className="lo-input-group">
+                        <label htmlFor="password">Password</label>
+                        <div className="lo-input-wrapper">
+                          <input type="password" id="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                          <span className="lo-input-icon">🔒</span>
+                        </div>
+                      </div>
+                      <button type="submit" className="lo-submit-btn">
+                        Sign In
+                        <span className="lo-btn-arrow">→</span>
+                      </button>
+                    </form>
+
+                    <p className="lo-footer-text">
+                      No account yet?
+                      <button onClick={() => setAuthMode('register')} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Create Account</button>
+                    </p>
+                    <div className="lo-divider">
+                      <span>Or continue with</span>
+                    </div>
+                    <div className="lo-social-buttons">
+                      <button type="button" className="lo-social-btn google" onClick={() => loginToGoogle()}>
+                        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
+                        Google
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="lo-visual-side">
-                  <img
-                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
-                    alt="Abstract Tech"
-                    className="lo-bg-image"
-                  />
-                  <div className="lo-overlay"></div>
-                  <div className="lo-glass-card">
-                    <div className="lo-card-icon">🚀</div>
-                    <h3>L'Innovation commence ici.</h3>
-                    <p>Rejoignez une communauté d'experts.</p>
+                )}
+
+                {/* --- Lado Direito (Form para Register, Visual para Login) --- */}
+                {authMode === 'register' ? (
+                  <div className="re-form-side">
+                    <div className="re-header">
+                      <h1 className="re-title">Create an Account</h1>
+                      <p className="re-subtitle">Join the community.</p>
+                    </div>
+
+                    <form className="re-form" onSubmit={handleRegisterSubmit}>
+                      <div className="re-input-group">
+                        <label>Full Name</label>
+                        <div className="re-input-wrapper">
+                          <input type="text" name="fullname" placeholder="Your name" value={formData.fullname} onChange={handleChange} required />
+                          <span className="re-icon">👤</span>
+                        </div>
+                      </div>
+                      <div className="re-input-group">
+                        <label>Email</label>
+                        <div className="re-input-wrapper">
+                          <input type="email" name="email" placeholder="name@fstsbz.rnu.tn" value={formData.email} onChange={handleChange} required />
+                          <span className="re-icon">✉️</span>
+                        </div>
+                      </div>
+                      <div className="re-row">
+                        <div className="re-input-group">
+                          <label>Password</label>
+                          <div className="re-input-wrapper">
+                            <input type="password" name="password" placeholder="••••••" value={formData.password} onChange={handleChange} required />
+                            <span className="re-icon">🔒</span>
+                          </div>
+                        </div>
+                        <div className="re-input-group">
+                          <label>Confirm Password</label>
+                          <div className="re-input-wrapper">
+                            <input type="password" name="confirmPassword" placeholder="••••••" value={formData.confirmPassword} onChange={handleChange} required />
+                            <span className="re-icon">🔒</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button type="submit" className="re-submit-btn">
+                        Create Account
+                        <span className="re-shine"></span>
+                      </button>
+                    </form>
+
+                    <p className="re-footer">
+                      Already a member? <button onClick={() => setAuthMode('login')} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}>Sign In</button>
+                    </p>
+                    <div className="lo-divider">
+                      <span>Or continue with</span>
+                    </div>
+                    <div className="lo-social-buttons">
+                      <button type="button" className="lo-social-btn google" onClick={() => loginToGoogle()}>
+                        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google" />
+                        Google
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="lo-visual-side">
+                    <img
+                      src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
+                      alt="Abstract Tech"
+                      className="lo-bg-image"
+                    />
+                  </div>
+                )}
+
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {showAdminModal && (
-        <Gestion_compte onClose={closeAdminModal} />
+      {showPresenceModal && (
+        <PresenceManagement onClose={closePresenceModal} />
       )}
-{showPresenceModal && (
-    <PresenceManagement onClose={closePresenceModal} />
-)}
       {/* -------------------------------------------------------- */}
       {/* 🌟 MODAL 6: LOGOUT CONFIRMATION POPUP (نافذة التأكيد) 🌟 */}
       {/* -------------------------------------------------------- */}
@@ -873,11 +888,11 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <div style={{ color: '#dc3545', fontSize: '3rem', marginBottom: '15px' }}>⚠️</div>
 
             {/* عنوان ورسالة */}
-            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Confirm Logout  </h2>
+            <h2 style={{ marginBottom: '10px', color: '#0f172a' }}>Confirm Sign Out  </h2>
             <p style={{ marginBottom: '30px', color: '#64748b', lineHeight: '1.6' }}>
-              Are you sure you want to log out of your account?
+              Are you sure you want to Sign Out of your account?
               <br />
-              You will need to log in again to access the workshops.
+              You will need to Sign In again to access the workshops.
             </p>
 
             {/* أزرار الإجراءات */}
@@ -913,7 +928,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                   fontWeight: '600'
                 }}
               >
-                Yes, Log Out
+                Yes, Sign Out
               </button>
             </div>
           </div>

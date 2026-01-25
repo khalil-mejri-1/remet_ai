@@ -9,7 +9,7 @@ const EditIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
 );
 const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 );
 const XIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -66,7 +66,8 @@ const LoadingPlaceholder = ({ count = 3 }) => {
 
 
 // --- URL API ---
-const API_URL = 'https://remet-ai-nate.vercel.app/api';
+import API_BASE_URL from '../config';
+const API_URL = `${API_BASE_URL}/api`;
 
 const KeySessions = () => {
   const [sessions, setSessions] = useState([]);
@@ -137,7 +138,7 @@ const KeySessions = () => {
 
   // --- HANDLERS ---
   const handleDelete = async (id) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette session ?")) {
+    if (window.confirm("Are you sure you want to delete this session?")) {
       try {
         // Corrected endpoint path: it seems the API endpoint for DELETE is /KeySession/:id
         await axios.delete(`${API_URL}/KeySession/${id}`);
@@ -231,11 +232,6 @@ const KeySessions = () => {
                   <h3 className="ks-session-title">{session.title}</h3>
                   <div className="ks-divider"></div>
                   <div className="ks-speaker-info">
-                    <div className="ks-img-wrapper">
-                      {/* Placeholder div rendering for a missing image */}
-                      {session.image ? <img src={session.image} alt={session.speaker} className="ks-speaker-img" /> : <div className="ks-img-placeholder"></div>}
-                      <div className="ks-online-dot"></div>
-                    </div>
                     <div className="ks-speaker-text">
                       <span className="ks-role">{session.role}</span>
                       <h4 className="ks-name">{session.speaker}</h4>
@@ -243,20 +239,20 @@ const KeySessions = () => {
                   </div>
 
                   {isAdmin && (
-                  <div className="ks-card-actions">
-                    <button
-                      className="ab-action-btn update"
-                      onClick={() => handleUpdateClick(session)}
-                    >
-                      <EditIcon /> Update
-                    </button>
-                    <button
-                      className="ab-action-btn delete"
-                      onClick={() => handleDelete(session._id)}
-                    >
-                      <TrashIcon /> Delete
-                    </button>
-                  </div>
+                    <div className="ks-card-actions">
+                      <button
+                        className="ab-action-btn update"
+                        onClick={() => handleUpdateClick(session)}
+                      >
+                        <EditIcon /> Update
+                      </button>
+                      <button
+                        className="ab-action-btn delete"
+                        onClick={() => handleDelete(session._id)}
+                      >
+                        <TrashIcon /> Delete
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -267,45 +263,37 @@ const KeySessions = () => {
 
       </div>
 
+
       {isModalOpen && currentSession && (
-        <div className="ks-modal-overlay">
-          <div className="ks-modal-content">
-            <div className="ks-modal-header">
-              <h3>{currentSession._id ? 'Modifier Session' : 'Nouvelle Session'}</h3>
-              <button className="ks-close-btn" onClick={() => setIsModalOpen(false)}><XIcon /></button>
+        <div className="ai-modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="ai-modal ai-modal-compact" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{currentSession._id ? 'Update Session' : 'New Key Session'}</h3>
+              <button className="close-x" onClick={() => setIsModalOpen(false)}><XIcon /></button>
             </div>
-            <form onSubmit={handleSave} className="ks-modal-form">
-              <div className="ks-form-group">
-                <label>Titre de la session</label>
-                <textarea name="title" value={currentSession.title} onChange={handleModalChange} required rows="3" />
+            <form onSubmit={handleSave} className="ai-form">
+              <div className="input-group">
+                <label>Session Title</label>
+                <textarea name="title" value={currentSession.title} onChange={handleModalChange} required rows="3" placeholder="e.g. AI Ethics and Governance" />
               </div>
-              <div className="ks-form-group">
-                <label>Nom du Speaker</label>
-                <input type="text" name="speaker" value={currentSession.speaker} onChange={handleModalChange} required />
+              <div className="input-group">
+                <label>Speaker Name</label>
+                <input type="text" name="speaker" value={currentSession.speaker} onChange={handleModalChange} required placeholder="e.g. Dr. Jane Smith" />
               </div>
-              <div className="ks-form-group">
-                <label>Rôle (ex: Keynote Speaker)</label>
-                <input type="text" name="role" value={currentSession.role} onChange={handleModalChange} required />
+              <div className="input-group">
+                <label>Role</label>
+                <input type="text" name="role" value={currentSession.role} onChange={handleModalChange} required placeholder="e.g. Keynote Speaker" />
               </div>
-              <div className="ks-form-group">
-                <label>URL Image Speaker</label>
-                <input type="text" name="image" value={currentSession.image} onChange={handleModalChange} placeholder="https://..." />
-              </div>
-              <div className="ks-form-group">
-                <label>Type d'icône</label>
-                <select
-                  name="iconType"
-                  value={currentSession.iconType}
-                  onChange={handleModalChange}
-                  required // Added required attribute
-                >
-                  <option value="brain">Brain</option>
-                  <option value="learn">Learn</option>
+              <div className="input-group">
+                <label>Icon Type</label>
+                <select name="iconType" value={currentSession.iconType} onChange={handleModalChange} required>
+                  <option value="brain">Brain (AI Focus)</option>
+                  <option value="learn">Learn (Education Focus)</option>
                 </select>
               </div>
-              <div className="ks-modal-actions">
-                <button type="button" className="ks-cancel-btn" onClick={() => setIsModalOpen(false)}>Annuler</button>
-                <button type="submit" className="ks-save-btn">Enregistrer</button>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className="ai-btn-primary">Save Changes</button>
               </div>
             </form>
           </div>
@@ -320,7 +308,7 @@ const KeySessions = () => {
             flex-direction: column;
             align-items: center;
             text-align: center;
-            margin-bottom: 50px;
+            margin-bottom: 25px;
         }
 
         /* Bouton Add Key Session */
@@ -381,32 +369,94 @@ const KeySessions = () => {
         .ks-action-btn.update:hover { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
         .ks-action-btn.delete:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 
-        /* Styles Modal (Cohérent avec les précédents) */
-        .ks-modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
-            z-index: 9999; display: flex; justify-content: center; align-items: center;
-        }
-        .ks-modal-content {
-            background: #1f1f2e; border: 1px solid rgba(255,255,255,0.1);
-            width: 90%; max-width: 450px; padding: 25px; border-radius: 16px;
-            color: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-        }
-        .ks-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .ks-close-btn { background: none; border: none; color: #aaa; cursor: pointer; }
-        .ks-close-btn:hover { color: white; }
 
-        .ks-form-group { margin-bottom: 15px; text-align: left; }
-        .ks-form-group label { display: block; margin-bottom: 6px; color: #ccc; font-size: 0.9rem; }
-        .ks-form-group input, .ks-form-group textarea, .ks-form-group select {
-            width: 100%; padding: 10px; background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
-            color: white; outline: none; font-family: inherit;
+        /* --- UNIFIED MODAL STYLES (Matching Speaker/Programme Design) --- */
+        .ai-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
         }
 
-        .ks-modal-actions { display: flex; gap: 10px; margin-top: 25px; }
-        .ks-save-btn { flex: 1; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        .ks-cancel-btn { flex: 1; background: transparent; border: 1px solid #555; color: #ccc; padding: 10px; border-radius: 8px; cursor: pointer; }
+        .ai-modal {
+            background: white;
+            width: 100%;
+            max-width: 550px;
+            border-radius: 28px;
+            overflow: hidden;
+            animation: modalSlide 0.4s ease-out;
+        }
+
+        @keyframes modalSlide { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .modal-header {
+            padding: 25px 35px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-header h3 { margin: 0; font-size: 1.2rem; color: #0f172a; font-weight: 700; }
+        .close-x { background: none; border: none; cursor: pointer; color: #94a3b8; }
+        .close-x:hover { color: #0f172a; }
+
+        .ai-form { padding: 35px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 8px; color: #0f172a; }
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus { 
+            border-color: #6366f1; 
+            outline: none; 
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.1); 
+        }
+
+        .ai-btn-primary {
+            background: #0f172a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .ai-btn-primary:hover { transform: scale(1.02); background: #000; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .btn-secondary { background: none; border: none; font-weight: 600; color: #64748b; cursor: pointer; }
+        .btn-secondary:hover { color: #0f172a; }
+
+
+        .ai-modal-compact {
+            max-width: 400px;
+        }
+
+        .ai-modal-compact .ai-form {
+            padding: 25px;
+        }
+
+        .ai-modal-compact .modal-header {
+            padding: 20px 25px;
+        }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 20px; margin-top: 30px; align-items: center; }
 
         /* Petit placeholder si pas d'image */
         .ks-img-placeholder { width: 50px; height: 50px; background: #333; border-radius: 50%; }

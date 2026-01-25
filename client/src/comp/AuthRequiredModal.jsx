@@ -8,13 +8,13 @@ const AuthRequiredModal = ({ isOpen, onClose, onRedirectToAuth, XIcon }) => {
     // Le style 'rm-modal-container-light' sera défini dans la section CSS pour l'apparence claire
     return (
         <div className="rm-overlay" onClick={onClose}>
-            <div 
-                className="rm-modal-container" 
-                onClick={(e) => e.stopPropagation()} 
+            <div
+                className="rm-modal-container"
+                onClick={(e) => e.stopPropagation()}
                 style={{ maxWidth: '400px', textAlign: 'center', padding: '40px 30px' }}
             >
-                <button 
-                    className="rm-close-btn" 
+                <button
+                    className="rm-close-btn"
                     onClick={onClose}
                 >
                     <XIcon />
@@ -28,20 +28,20 @@ const AuthRequiredModal = ({ isOpen, onClose, onRedirectToAuth, XIcon }) => {
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
-                    <button 
-                        className="nav-register-btn" 
-                        onClick={() => onRedirectToAuth('register')} 
+                    <button
+                        className="nav-register-btn"
+                        onClick={() => onRedirectToAuth('register')}
                         style={{ width: '100%', justifyContent: 'center', backgroundColor: '#3b82f6' }}
                     >
-                        S'inscrire
+                        Create Account
                     </button>
 
-                    <button 
-                        className="login-button" 
-                        onClick={() => onRedirectToAuth('login')} 
+                    <button
+                        className="login-button"
+                        onClick={() => onRedirectToAuth('login')}
                         style={{ width: '100%', justifyContent: 'center', backgroundColor: '#e5e7eb', color: '#374151' }}
                     >
-                        Log in
+                        Sign In
                     </button>
                 </div>
             </div>

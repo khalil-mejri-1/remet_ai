@@ -9,15 +9,15 @@ export default function Hero_main({ onRegisterClick }) {
         const isAlreadyRegistered = localStorage.getItem('WORKSHOP') === 'true';
 
         if (isAlreadyRegistered) {
-             // 1. If user is ALREADY in the DB (WORKSHOP flag is true)
-             // Trigger the Success/Info Alert
-             window.dispatchEvent(new Event('trigger-success-alert'));
-        } 
+            // 1. If user is ALREADY in the DB (WORKSHOP flag is true)
+            // Trigger the Success/Info Alert
+            window.dispatchEvent(new Event('trigger-success-alert'));
+        }
         else if (isLoggedIn) {
             // 2. If connected but NOT registered yet
             // Proceed to workshop registration form
             onRegisterClick();
-        } 
+        }
         else {
             // 3. If NOT connected
             // Trigger the Auth Alert
@@ -40,9 +40,7 @@ export default function Hero_main({ onRegisterClick }) {
 
                     {/* Description */}
                     <p className="hero-description">
-                        an event where experts, researchers, and industry professionals gather to discuss the latest
-                        advancements in artificial intelligence. It features keynote speeches, technical workshops,
-                        live demonstrations, and networking opportunities.
+                        REMET-AI is an annual workshop for researchers, academics, and students working in artificial intelligence. REMET'AI'4 brings together leading experts, distinguished speakers, and professional researchers to explore cutting-edge developments in the field. The program combines theoretical presentations with hands-on workshops, giving participants the opportunity to immediately apply new concepts under expert guidance.
                     </p>
 
                     {/* Action Buttons */}
@@ -51,9 +49,9 @@ export default function Hero_main({ onRegisterClick }) {
                         <button className="btn register-btn" onClick={handleRegisterBtnClick}>
                             REGISTER NOW
                         </button>
-                        
-                        <button style={{border:"none", backgroundColor:'transparent'}}>
-                            <a href="#program" className="btn program-btn" style={{textDecoration:"none"}}>PROGRAM</a> 
+
+                        <button style={{ border: "none", backgroundColor: 'transparent' }}>
+                            <a href="#program" className="btn program-btn" style={{ textDecoration: "none" }}>PROGRAM</a>
                         </button>
                     </div>
                 </div>
