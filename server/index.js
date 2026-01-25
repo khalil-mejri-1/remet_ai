@@ -63,93 +63,93 @@ const formatDateTime = (date) => dayjs(date).format('YYYY-MM-DD HH:mm');
 
 
 app.get('/', (req, res) => {
-  res.send('final update_ 11/29/2025')
+  res.send('final update_ 11/29/202666')
 })
 
 
 app.post('/api/register', async (req, res) => {
-    try {
-        const { fullName, email, password } = req.body;
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ message: "User exists" });
+  try {
+    const { fullName, email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "User exists" });
 
-        const hashedPassword = password ? await hashPassword(password) : null;
+    const hashedPassword = password ? await hashPassword(password) : null;
 
-        const newUser = new User({ fullName, email, password: hashedPassword });
-        await newUser.save();
-        res.status(201).json(newUser);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    const newUser = new User({ fullName, email, password: hashedPassword });
+    await newUser.save();
+    res.status(201).json(newUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-        if (password && user.password) {
-            const match = await bcrypt.compare(password, user.password);
-            if (!match) return res.status(400).json({ message: "Invalid credentials" });
-        }
-
-        res.json(user);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    if (password && user.password) {
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/google-login', async (req, res) => {
-    try {
-        const { fullName, email } = req.body;
-        let user = await User.findOne({ email });
-        if (!user) {
-            user = new User({ fullName, email, password: null });
-            await user.save();
-        }
-        res.json(user);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+  try {
+    const { fullName, email } = req.body;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ fullName, email, password: null });
+      await user.save();
     }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /* -----------------------
    Registration Form
 ----------------------- */
 app.post('/api/registration/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { fullName, email, institution, class: clazz, phone } = req.body;
+  try {
+    const { id } = req.params;
+    const { fullName, email, institution, class: clazz, phone } = req.body;
 
-        if (!fullName || !email) return res.status(400).json({ message: 'Nom et Email sont requis' });
+    if (!fullName || !email) return res.status(400).json({ message: 'Nom et Email sont requis' });
 
-        const existing = await Registration.findOne({ userId: id });
-        if (existing) {
-            existing.fullName = fullName;
-            existing.email = email;
-            existing.institution = institution;
-            existing.class = clazz;
-            existing.phone = phone;
-            await existing.save();
-            return res.json({ message: 'Inscription mise à jour', registration: existing });
-        }
-
-        const registration = await Registration.create({
-            userId: id,
-            fullName,
-            email,
-            institution,
-            class: clazz,
-            phone
-        });
-
-        res.status(201).json({ message: 'Inscription créée', registration });
-
-    } catch (err) {
-        console.error("Server Error:", err);
-        res.status(500).json({ message: 'Erreur serveur', error: err.message });
+    const existing = await Registration.findOne({ userId: id });
+    if (existing) {
+      existing.fullName = fullName;
+      existing.email = email;
+      existing.institution = institution;
+      existing.class = clazz;
+      existing.phone = phone;
+      await existing.save();
+      return res.json({ message: 'Inscription mise à jour', registration: existing });
     }
+
+    const registration = await Registration.create({
+      userId: id,
+      fullName,
+      email,
+      institution,
+      class: clazz,
+      phone
+    });
+
+    res.status(201).json({ message: 'Inscription créée', registration });
+
+  } catch (err) {
+    console.error("Server Error:", err);
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
+  }
 });
 
 app.get('/api/registrations', async (req, res) => {
@@ -177,16 +177,17 @@ app.get('/api/registrations', async (req, res) => {
 });
 
 app.get('/api/check-registration/:email', async (req, res) => {
-    try {
-        const email = req.params.email;
-        const existingUser = await Registration.findOne({ email });
-        res.json({ registered: !!existingUser
-          
-         });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }
+  try {
+    const email = req.params.email;
+    const existingUser = await Registration.findOne({ email });
+    res.json({
+      registered: !!existingUser
+
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
 /* -----------------------
@@ -234,81 +235,81 @@ app.get('/api/sessions/:id/qrcode', async (req, res) => {
    Attendance / Scan QR
 ----------------------- */
 app.post('/api/attendance/scan', async (req, res) => {
-    try {
-        const { sessionId, userId, fullName, email } = req.body;
+  try {
+    const { sessionId, userId, fullName, email } = req.body;
 
-        if (!sessionId || !userId || !fullName || !email) 
-            return res.status(400).json({ message: 'Tous les champs sont requis' });
+    if (!sessionId || !userId || !fullName || !email)
+      return res.status(400).json({ message: 'Tous les champs sont requis' });
 
-        // -----------------------------
-        // 1. Recherche de la session via Program
-        // -----------------------------
-        const program = await Program.findOne({ "sessions.id": Number(sessionId) });
+    // -----------------------------
+    // 1. Recherche de la session via Program
+    // -----------------------------
+    const program = await Program.findOne({ "sessions.id": Number(sessionId) });
 
-        if (!program)
-            return res.status(404).json({ message: "Session introuvable" });
+    if (!program)
+      return res.status(404).json({ message: "Session introuvable" });
 
-        const session = program.sessions.find(s => s.id === Number(sessionId));
+    const session = program.sessions.find(s => s.id === Number(sessionId));
 
-        if (!session)
-            return res.status(404).json({ message: "Session introuvable" });
+    if (!session)
+      return res.status(404).json({ message: "Session introuvable" });
 
-        // -----------------------------
-        // 2. Récupérer infos utilisateur depuis Registration
-        // -----------------------------
-        const registration = await Registration.findOne({ userId });
+    // -----------------------------
+    // 2. Récupérer infos utilisateur depuis Registration
+    // -----------------------------
+    const registration = await Registration.findOne({ userId });
 
-        const userClass = registration ? registration.class : null;
-        const userPhone = registration ? registration.phone : null;
+    const userClass = registration ? registration.class : null;
+    const userPhone = registration ? registration.phone : null;
 
-        // -----------------------------
-        // 3. Préparer les données
-        // -----------------------------
-        const attendanceObj = {
-            userId,
-            sessionId,
-            nameSession: session.title,
-            timeSession: session.time,
-            fullName,
-            email,
-            class: userClass,
-            phone: userPhone   // <- اضافه الحقل هنا
-        };
+    // -----------------------------
+    // 3. Préparer les données
+    // -----------------------------
+    const attendanceObj = {
+      userId,
+      sessionId,
+      nameSession: session.title,
+      timeSession: session.time,
+      fullName,
+      email,
+      class: userClass,
+      phone: userPhone   // <- اضافه الحقل هنا
+    };
 
-        // -----------------------------
-        // 4. Enregistrer
-        // -----------------------------
-        const attendance = await Attendance.create(attendanceObj);
+    // -----------------------------
+    // 4. Enregistrer
+    // -----------------------------
+    const attendance = await Attendance.create(attendanceObj);
 
-        res.json({ 
-            success: true, 
-            message: 'Présence validée avec succès !', 
-            data: attendance 
-        });
+    res.json({
+      success: true,
+      message: 'Présence validée avec succès !',
+      data: attendance
+    });
 
-    } catch (err) {
-        console.error("Scan Error:", err);
+  } catch (err) {
+    console.error("Scan Error:", err);
 
-        if (err.code === 11000) {
-            return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
-        }
-
-        res.status(500).json({ message: 'Erreur serveur', error: err.message });
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
     }
+
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
+  }
 });
 
 
 app.get('/api/attendance', async (req, res) => {
-    try {
-        // Fetch all attendance records from the database
-        const attendances = await Attendance.find().sort({ scanTime: -1 }); // sorted by latest scan
+  try {
+    // Fetch all attendance records from the database
+    const attendances = await Attendance.find().sort({ scanTime: -1 }); // sorted by latest scan
 
-        // Return the data as JSON
-        res.status(200).json(attendances);
-    } catch (error) {
-        console.error("Error fetching attendance:", error);
-        res.status(500).json({ message: "Internal server error while fetching attendance data." });
-    }
+    // Return the data as JSON
+    res.status(200).json(attendances);
+  } catch (error) {
+    console.error("Error fetching attendance:", error);
+    res.status(500).json({ message: "Internal server error while fetching attendance data." });
+  }
 });
 
 
@@ -329,86 +330,86 @@ app.get('/api/attendance', async (req, res) => {
 
 
 app.get('/api/hero', async (req, res) => {
-    try {
-        let hero = await HeroSection.findOne({ sectionName: 'main_hero' });
-        // إذا لم توجد صورة، قم بإنشاء واحدة افتراضية
-        if (!hero) {
-            hero = await HeroSection.create({
-                sectionName: 'main_hero',
-                // صورة افتراضية تعمل وتدعم التحميل المباشر
-                imageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop'
-            });
-        }
-        res.json(hero);
-    } catch (err) {
-        console.error("Hero Error:", err);
-        res.status(500).json({ error: err.message });
+  try {
+    let hero = await HeroSection.findOne({ sectionName: 'main_hero' });
+    // إذا لم توجد صورة، قم بإنشاء واحدة افتراضية
+    if (!hero) {
+      hero = await HeroSection.create({
+        sectionName: 'main_hero',
+        // صورة افتراضية تعمل وتدعم التحميل المباشر
+        imageUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop'
+      });
     }
+    res.json(hero);
+  } catch (err) {
+    console.error("Hero Error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.put('/api/hero', async (req, res) => {
-    try {
-        const { imageUrl, title, description } = req.body;
-        const updatedHero = await HeroSection.findOneAndUpdate(
-            { sectionName: 'main_hero' },
-            { $set: { imageUrl, title, description } },
-            { new: true, upsert: true } // upsert ينشئ المستند إذا لم يكن موجوداً
-        );
-        res.json(updatedHero);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const { imageUrl, title, description } = req.body;
+    const updatedHero = await HeroSection.findOneAndUpdate(
+      { sectionName: 'main_hero' },
+      { $set: { imageUrl, title, description } },
+      { new: true, upsert: true } // upsert ينشئ المستند إذا لم يكن موجوداً
+    );
+    res.json(updatedHero);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // B. TEAM ROUTES
 app.get('/api/team', async (req, res) => {
-    try {
-        const members = await TeamMember.find();
-        res.json(members);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const members = await TeamMember.find();
+    res.json(members);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/team', async (req, res) => {
-    try {
-        console.log("Receiving Data:", req.body); // للتأكد من وصول البيانات
-        const { name, role, image } = req.body;
-        
-        if (!name || !role) {
-            return res.status(400).json({ error: "Name and Role are required" });
-        }
+  try {
+    console.log("Receiving Data:", req.body); // للتأكد من وصول البيانات
+    const { name, role, image } = req.body;
 
-        const newMember = new TeamMember({ name, role, image });
-        const savedMember = await newMember.save();
-        res.status(201).json(savedMember);
-    } catch (err) {
-        console.error("Add Member Error:", err);
-        res.status(400).json({ error: err.message });
+    if (!name || !role) {
+      return res.status(400).json({ error: "Name and Role are required" });
     }
+
+    const newMember = new TeamMember({ name, role, image });
+    const savedMember = await newMember.save();
+    res.status(201).json(savedMember);
+  } catch (err) {
+    console.error("Add Member Error:", err);
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.put('/api/team/:id', async (req, res) => {
-    try {
-        const { name, role, image } = req.body;
-        const updatedMember = await TeamMember.findByIdAndUpdate(
-            req.params.id,
-            { name, role, image },
-            { new: true }
-        );
-        res.json(updatedMember);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
+  try {
+    const { name, role, image } = req.body;
+    const updatedMember = await TeamMember.findByIdAndUpdate(
+      req.params.id,
+      { name, role, image },
+      { new: true }
+    );
+    res.json(updatedMember);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.delete('/api/team/:id', async (req, res) => {
-    try {
-        await TeamMember.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Member deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    await TeamMember.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Member deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 
@@ -533,99 +534,99 @@ app.delete('/api/KeySession/:id', async (req, res) => {
 
 
 app.get('/api/program', async (req, res) => {
-    try {
-        const programs = await Program.find({});
-        res.json(programs);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  try {
+    const programs = await Program.find({});
+    res.json(programs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Get single day by day name
 app.get('/api/program/:day', async (req, res) => {
-    try {
-        const program = await Program.findOne({ day: req.params.day });
-        if (!program) return res.status(404).json({ message: 'Day not found' });
-        res.json(program);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  try {
+    const program = await Program.findOne({ day: req.params.day });
+    if (!program) return res.status(404).json({ message: 'Day not found' });
+    res.json(program);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Add new day
 app.post('/api/program', async (req, res) => {
-    try {
-        const { day } = req.body;
-        if (!day) return res.status(400).json({ message: 'Day is required' });
+  try {
+    const { day } = req.body;
+    if (!day) return res.status(400).json({ message: 'Day is required' });
 
-        const existing = await Program.findOne({ day });
-        if (existing) return res.status(400).json({ message: 'Day already exists' });
+    const existing = await Program.findOne({ day });
+    if (existing) return res.status(400).json({ message: 'Day already exists' });
 
-        const newProgram = new Program({ day, sessions: [] });
-        await newProgram.save();
-        res.status(201).json(newProgram);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+    const newProgram = new Program({ day, sessions: [] });
+    await newProgram.save();
+    res.status(201).json(newProgram);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Update sessions for a day
 app.put('/api/program/:day', async (req, res) => {
-    try {
-        const { sessions } = req.body;
+  try {
+    const { sessions } = req.body;
 
-        // 1. Unique داخل القائمة نفسها
-        const ids = sessions.map(s => s.id);
-        const hasDuplicate = ids.some((id, idx) => ids.indexOf(id) !== idx);
-        if (hasDuplicate) {
-            return res.status(400).json({
-                message: "Session ID duplicated inside the same request."
-            });
-        }
-
-        // 2. Unique عالميًا في كل الأيام
-        for (let session of sessions) {
-            const exists = await Program.findOne({
-                "sessions.id": session.id,
-                day: { $ne: req.params.day } // استثناء اليوم نفسه
-            });
-
-            if (exists) {
-                return res.status(400).json({
-                    message: `Session ID ${session.id} is already used in another day.`
-                });
-            }
-        }
-
-        // 3. التحديث إذا كان كل شيء جيد
-        const updated = await Program.findOneAndUpdate(
-            { day: req.params.day },
-            { sessions },
-            { new: true }
-        );
-
-        if (!updated)
-            return res.status(404).json({ message: 'Day not found' });
-
-        res.json(updated);
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: err.message });
+    // 1. Unique داخل القائمة نفسها
+    const ids = sessions.map(s => s.id);
+    const hasDuplicate = ids.some((id, idx) => ids.indexOf(id) !== idx);
+    if (hasDuplicate) {
+      return res.status(400).json({
+        message: "Session ID duplicated inside the same request."
+      });
     }
+
+    // 2. Unique عالميًا في كل الأيام
+    for (let session of sessions) {
+      const exists = await Program.findOne({
+        "sessions.id": session.id,
+        day: { $ne: req.params.day } // استثناء اليوم نفسه
+      });
+
+      if (exists) {
+        return res.status(400).json({
+          message: `Session ID ${session.id} is already used in another day.`
+        });
+      }
+    }
+
+    // 3. التحديث إذا كان كل شيء جيد
+    const updated = await Program.findOneAndUpdate(
+      { day: req.params.day },
+      { sessions },
+      { new: true }
+    );
+
+    if (!updated)
+      return res.status(404).json({ message: 'Day not found' });
+
+    res.json(updated);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 
 
 // Delete a day
 app.delete('/api/program/:day', async (req, res) => {
-    try {
-        const deleted = await Program.findOneAndDelete({ day: req.params.day });
-        if (!deleted) return res.status(404).json({ message: 'Day not found' });
-        res.json({ message: 'Day deleted' });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  try {
+    const deleted = await Program.findOneAndDelete({ day: req.params.day });
+    if (!deleted) return res.status(404).json({ message: 'Day not found' });
+    res.json({ message: 'Day deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 
@@ -636,63 +637,63 @@ app.delete('/api/program/:day', async (req, res) => {
 
 
 app.get('/admin/users', async (req, res) => {
-    try {
-        const users = await User.find();
-        res.json(users);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erreur serveur' });
-    }
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 
 app.get('/api/user/role/:email', async (req, res) => {
-    try {
-        const userEmail = req.params.email;
-        // Recherche de l'utilisateur par email
-        const user = await User.findOne({ email: userEmail });
+  try {
+    const userEmail = req.params.email;
+    // Recherche de l'utilisateur par email
+    const user = await User.findOne({ email: userEmail });
 
-        if (!user) {
-            // Si l'utilisateur n'est pas trouvé, on suppose qu'il n'est pas admin
-            return res.json({ role: 'student' }); 
-        }
+    if (!user) {
+      // Si l'utilisateur n'est pas trouvé, on suppose qu'il n'est pas admin
+      return res.json({ role: 'student' });
+    }
 
-        // Répondre avec le rôle de l'utilisateur
-        res.json({ role: user.role }); 
+    // Répondre avec le rôle de l'utilisateur
+    res.json({ role: user.role });
 
-    } catch (error) {
-        console.error("Erreur de récupération de rôle:", error);
-        // En cas d'erreur serveur, on renvoie un rôle par défaut non-admin
-        res.status(500).json({ role: 'student' }); 
-    }
+  } catch (error) {
+    console.error("Erreur de récupération de rôle:", error);
+    // En cas d'erreur serveur, on renvoie un rôle par défaut non-admin
+    res.status(500).json({ role: 'student' });
+  }
 });
 
 
 app.put('/admin/users/:id/role', async (req, res) => {
-    const { id } = req.params;
-    const { role } = req.body;
-    if (!['admin','student'].includes(role)) return res.status(400).json({ message: 'Role invalide' });
+  const { id } = req.params;
+  const { role } = req.body;
+  if (!['admin', 'student'].includes(role)) return res.status(400).json({ message: 'Role invalide' });
 
-    try {
-        const user = await User.findByIdAndUpdate(id, { role }, { new: true });
-        if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
-        res.json({ message: `Rôle changé avec succès à ${role}` });
-    } catch (err) {
-        res.status(500).json({ message: 'Erreur serveur' });
-    }
+  try {
+    const user = await User.findByIdAndUpdate(id, { role }, { new: true });
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    res.json({ message: `Rôle changé avec succès à ${role}` });
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 
 
 // --- DELETE user ---
 app.delete('/admin/users/:id', async (req, res) => {
-    try {
-        const deletedUser = await User.findByIdAndDelete(req.params.id);
-        if (!deletedUser) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+  try {
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (!deletedUser) return res.status(404).json({ message: 'Utilisateur non trouvé' });
 
-        res.json({ message: 'Utilisateur supprimé avec succès' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Erreur serveur lors de la suppression de l’utilisateur' });
-    }
+    res.json({ message: 'Utilisateur supprimé avec succès' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur serveur lors de la suppression de l’utilisateur' });
+  }
 });
 
 
