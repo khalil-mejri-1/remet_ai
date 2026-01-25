@@ -6,6 +6,7 @@ const sessionSchema = new mongoose.Schema({
     ledBy: { type: String, default: '' },
     icon: { type: String, default: '🎤' },
     type: { type: String, default: 'session' },
+    attendanceEnabled: { type: Boolean, default: true },
     id: { type: Number, required: true }
 });
 

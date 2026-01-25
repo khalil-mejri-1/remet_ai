@@ -27,12 +27,12 @@ export default function Home() {
   const checkAuthStatus = () => {
     const isLogin = localStorage.getItem('login') === 'true';
     const isWorkshop = localStorage.getItem('WORKSHOP') === 'true';
-    
-    
+
+
     if (isLogin && isWorkshop) {
-        setShowPresenceBtn(true);
+      setShowPresenceBtn(true);
     } else {
-        setShowPresenceBtn(false);
+      setShowPresenceBtn(false);
     }
   };
 
@@ -44,11 +44,11 @@ export default function Home() {
 
   return (
     <>
-      <Navbar 
+      <Navbar
         isWorkshopOpen={showWorkshopModal}
         onOpenWorkshop={openWorkshop}
         onCloseWorkshop={closeWorkshop}
-        onAuthUpdate={checkAuthStatus} 
+        onAuthUpdate={checkAuthStatus}
       />
 
       <Hero_main onRegisterClick={openWorkshop} />
@@ -60,19 +60,20 @@ export default function Home() {
       <Footer />
 
 
-           {showPresenceBtn && (
-            <a href="#program">
+      {showPresenceBtn && (
+        <a href="#program">
 
-                <button className="floating-presence-btn" >
-          <span className="scan-icon"></span> Attendance
-        </button>
-            </a>
-      
+          <button className="floating-presence-btn">
+            <div className="tag-pulse" style={{ position: 'static' }}></div>
+            <span className="scan-icon"></span> Attendance
+          </button>
+        </a>
+
       )}
 
 
 
- 
+
     </>
   );
 }

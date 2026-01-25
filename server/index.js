@@ -63,7 +63,7 @@ const formatDateTime = (date) => dayjs(date).format('YYYY-MM-DD HH:mm');
 
 
 app.get('/', (req, res) => {
-  res.send('final update_ 11/29/202666')
+  res.send('final update_ 1/25/2026')
 })
 
 
@@ -236,64 +236,67 @@ app.get('/api/sessions/:id/qrcode', async (req, res) => {
 ----------------------- */
 app.post('/api/attendance/scan', async (req, res) => {
   try {
-    const { sessionId, userId, fullName, email } = req.body;
+    const { sessionId, userId, fullName, email, type } = req.body;
 
     if (!sessionId || !userId || !fullName || !email)
       return res.status(400).json({ message: 'Tous les champs sont requis' });
 
-    // -----------------------------
-    // 1. Recherche de la session via Program
-    // -----------------------------
-    const program = await Program.findOne({ "sessions.id": Number(sessionId) });
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'ID utilisateur invalide' });
+    }
 
-    if (!program)
-      return res.status(404).json({ message: "Session introuvable" });
+    // 1. Find session in program
+    const program = await Program.findOne({ "sessions.id": Number(sessionId) });
+    if (!program) return res.status(404).json({ message: "Session introuvable" });
 
     const session = program.sessions.find(s => s.id === Number(sessionId));
+    if (!session) return res.status(404).json({ message: "Session introuvable" });
 
-    if (!session)
-      return res.status(404).json({ message: "Session introuvable" });
-
-    // -----------------------------
-    // 2. Récupérer infos utilisateur depuis Registration
-    // -----------------------------
+    // 2. Get user info from registration
     const registration = await Registration.findOne({ userId });
-
     const userClass = registration ? registration.class : null;
     const userPhone = registration ? registration.phone : null;
 
-    // -----------------------------
-    // 3. Préparer les données
-    // -----------------------------
-    const attendanceObj = {
-      userId,
-      sessionId,
+    // 3. Prepare update object
+    const updateData = {
       nameSession: session.title,
       timeSession: session.time,
       fullName,
       email,
       class: userClass,
-      phone: userPhone   // <- اضافه الحقل هنا
+      phone: userPhone,
+      scanTime: new Date()
     };
 
-    // -----------------------------
-    // 4. Enregistrer
-    // -----------------------------
-    const attendance = await Attendance.create(attendanceObj);
+    if (type === 'entry') {
+      updateData.checkInTime = new Date();
+    } else if (type === 'exit') {
+      updateData.checkOutTime = new Date();
+    }
+
+    // 4. Update or Create Attendance record
+    // Using explicit casting to ensure index match
+    const attendance = await Attendance.findOneAndUpdate(
+      {
+        userId: new mongoose.Types.ObjectId(userId),
+        sessionId: String(sessionId)
+      },
+      { $set: updateData },
+      { new: true, upsert: true, runValidators: true }
+    );
+
+    let message = 'Presence updated successfully!';
+    if (type === 'entry') message = 'Check-in successful! ✅';
+    if (type === 'exit') message = 'Check-out successful! ✅';
 
     res.json({
       success: true,
-      message: 'Présence validée avec succès !',
+      message,
       data: attendance
     });
 
   } catch (err) {
     console.error("Scan Error:", err);
-
-    if (err.code === 11000) {
-      return res.status(400).json({ message: 'Vous avez déjà scanné votre présence pour cette session.' });
-    }
-
     res.status(500).json({ message: 'Erreur serveur', error: err.message });
   }
 });
@@ -311,6 +314,200 @@ app.get('/api/attendance', async (req, res) => {
     res.status(500).json({ message: "Internal server error while fetching attendance data." });
   }
 });
+
+// PDF Export for Global Attendance
+app.get('/api/attendance/export-pdf', async (req, res) => {
+  try {
+    // 1. Get all programs with attendance-enabled sessions
+    const programs = await Program.find();
+    const enabledSessions = [];
+
+    programs.forEach(program => {
+      program.sessions.forEach(session => {
+        if (session.attendanceEnabled) {
+          enabledSessions.push({
+            id: session.id,
+            title: session.title,
+            day: program.day
+          });
+        }
+      });
+    });
+
+    if (enabledSessions.length === 0) {
+      return res.status(400).json({ message: "No sessions with attendance enabled" });
+    }
+
+    // 2. Get all attendance records
+    const attendances = await Attendance.find();
+
+    // 3. Group by user and calculate global presence
+    const userMap = new Map();
+
+    attendances.forEach(record => {
+      const key = record.email;
+      if (!userMap.has(key)) {
+        userMap.set(key, {
+          fullName: record.fullName,
+          email: record.email,
+          class: record.class || 'N/A',
+          sessionsCompleted: new Set()
+        });
+      }
+
+      // Check if both check-in and check-out exist
+      if (record.checkInTime && record.checkOutTime) {
+        userMap.get(key).sessionsCompleted.add(record.sessionId);
+      }
+    });
+
+    // 4. Filter users with global presence (attended ALL enabled sessions)
+    const globalPresentStudents = [];
+    userMap.forEach((userData, email) => {
+      // Calculate how many of the ENABLED sessions this user completed
+      // We check if the user's completed sessions include all the enabled session IDs
+      const relevantCompletedCount = enabledSessions.reduce((count, session) => {
+        return count + (userData.sessionsCompleted.has(String(session.id)) ? 1 : 0);
+      }, 0);
+
+      if (relevantCompletedCount === enabledSessions.length) {
+        globalPresentStudents.push({
+          fullName: userData.fullName,
+          email: userData.email,
+          class: userData.class,
+          sessionsAttended: relevantCompletedCount,
+          status: 'Present'
+        });
+      }
+    });
+
+    // Sort by name
+    globalPresentStudents.sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+    // 5. Generate Styled PDF
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+
+    // Set response headers
+    const timestamp = dayjs().format('YYYY-MM-DD-HHmm');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=REMET-AI-Attendance-Report-${timestamp}.pdf`);
+
+    doc.pipe(res);
+
+    // --- Colors & Styling ---
+    const primaryColor = '#2563eb'; // Blue
+    const darkColor = '#1e293b'; // Dark Slate
+    const lightColor = '#f1f5f9'; // Stripe Color
+    const textColor = '#334155';
+    const mutedColor = '#64748b';
+
+    // --- Header ---
+    try {
+      const logoPath = path.join(__dirname, '../client/src/img/logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 40, { width: 100 });
+      } else {
+        doc.fontSize(20).fillColor(primaryColor).font('Helvetica-Bold').text('REMET-AI', 40, 40);
+      }
+    } catch (e) {
+      doc.fontSize(20).fillColor(primaryColor).font('Helvetica-Bold').text('REMET-AI', 40, 40);
+    }
+
+    doc.fontSize(16).fillColor(darkColor).font('Helvetica-Bold').text('Global Attendance Report', 200, 45, { align: 'right' });
+    doc.fontSize(10).fillColor(mutedColor).font('Helvetica').text(`Generated: ${new Date().toLocaleString()}`, 200, 65, { align: 'right' });
+
+    // Header Separator
+    doc.moveTo(40, 90).lineTo(555, 90).strokeColor(primaryColor).lineWidth(2).stroke();
+    doc.moveDown(1.5);
+
+    // Summary Box
+    const summaryY = doc.y;
+    doc.rect(40, summaryY, 515, 60).fillColor(lightColor).fill();
+    doc.fillColor(darkColor).font('Helvetica-Bold').fontSize(11);
+    doc.text(`Required Sessions: ${enabledSessions.length}`, 60, summaryY + 15);
+    doc.text(`Identified Full Participants: ${globalPresentStudents.length}`, 60, summaryY + 35);
+    doc.moveDown(5);
+
+    // --- Table Headers ---
+    const tableTop = doc.y;
+    const colX = { name: 40, email: 180, class: 360, sessions: 460, status: 510 };
+    const colWidths = { name: 140, email: 180, class: 100, sessions: 50, status: 45 };
+
+    // Header Background
+    doc.rect(40, tableTop, 515, 25).fillColor(darkColor).fill();
+    doc.fillColor('white').font('Helvetica-Bold').fontSize(9);
+
+    doc.text('FULL NAME', colX.name + 10, tableTop + 8);
+    doc.text('EMAIL ADDRESS', colX.email, tableTop + 8);
+    doc.text('CLASS/LEVEL', colX.class, tableTop + 8);
+    doc.text('SESS.', colX.sessions, tableTop + 8, { width: colWidths.sessions, align: 'center' });
+    doc.text('STATUS', colX.status, tableTop + 8);
+
+    let currentY = tableTop + 25;
+
+    // --- Table Rows ---
+    doc.font('Helvetica').fontSize(8.5);
+
+    globalPresentStudents.forEach((student, index) => {
+      // Alternate row background
+      if (index % 2 === 0) {
+        doc.rect(40, currentY, 515, 25).fillColor(lightColor).fill();
+      }
+
+      doc.fillColor(textColor);
+
+      // Vertical clipping/alignment helper
+      const rowY = currentY + 8;
+
+      doc.text(student.fullName, colX.name + 10, rowY, { width: colWidths.name, lineBreak: false });
+      doc.text(student.email, colX.email, rowY, { width: colWidths.email, lineBreak: false });
+      doc.text(student.class || 'N/A', colX.class, rowY, { width: colWidths.class, lineBreak: false });
+
+      // Count session bubble
+      doc.text(student.sessionsAttended.toString(), colX.sessions, rowY, { width: colWidths.sessions, align: 'center' });
+
+      // Status Badge (Simplified Present text)
+      doc.fillColor('#16a34a').font('Helvetica-Bold').text('PRESENT', colX.status, rowY);
+      doc.font('Helvetica'); // Reset font
+
+      currentY += 25;
+
+      // New Page Logic
+      if (currentY > 750) {
+        doc.addPage();
+        currentY = 50;
+
+        // Re-draw header on new page
+        doc.rect(40, currentY, 515, 25).fillColor(darkColor).fill();
+        doc.fillColor('white').font('Helvetica-Bold').fontSize(9);
+        doc.text('FULL NAME', colX.name + 10, currentY + 8);
+        doc.text('EMAIL ADDRESS', colX.email, currentY + 8);
+        doc.text('CLASS/LEVEL', colX.class, currentY + 8);
+        doc.text('SESS.', colX.sessions, currentY + 8, { width: colWidths.sessions, align: 'center' });
+        doc.text('STATUS', colX.status, currentY + 8);
+        currentY += 25;
+      }
+    });
+
+    // --- Footer ---
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      doc.moveTo(40, 800).lineTo(555, 800).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
+      doc.fontSize(8).fillColor(mutedColor).text(
+        `Page ${i + 1} of ${range.count}  |  REMET-AI Attendance Tracking System  |  Lead The Change`,
+        40, 810, { align: 'center' }
+      );
+    }
+
+    doc.end();
+
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    res.status(500).json({ message: "Error generating PDF", error: error.message });
+  }
+});
+
 
 
 

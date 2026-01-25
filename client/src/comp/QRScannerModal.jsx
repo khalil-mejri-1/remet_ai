@@ -24,7 +24,7 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
   const [apiResult, setApiResult] = useState(null);
 
   // Déterminer le titre du modal basé sur le scanType
-  const action = scanType === 'entry' ? 'Entrer' : 'Sortir';
+  const action = scanType === 'entry' ? 'Check-in' : 'Check-out';
   const headingText = `Scan QR Code to ${action}`;
 
   const { ref } = useZxing({
@@ -33,16 +33,7 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
       if (status === "scanned_success" || status === "sending" || status === "api_result") return;
 
       const value = decoded.getText();
-
-      // 🎯 إضافة المطلوب: تحديد النتيجة وعرضها في alert لكلا الحالتين
       const isCorrect = value === correctQR;
-
-      const resultMessage = isCorrect
-        ? `✅ Scan réussi! Le code est CORRECT. Valeur: ${value}`
-        : `❌ Scan échoué! Le code est INCORRECT. Valeur scannée: ${value}`;
-
-      alert(resultMessage);
-      // -------------------------------------------------------------------
 
       if (isCorrect) {
         // 1. Code correct : Prêt pour l'envoi
@@ -116,7 +107,6 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
 
         <h3 style={styles.heading}>{headingText}</h3> {/* 👈 TITRE MIS À jour */}
         <p style={styles.subText}>Please point the camera at the workshop's QR code. </p>
-        <p style={{ color: "black" }}>{correctQR}</p>
 
         {/* Conteneur vidéo avec bordure d'état */}
         <div style={{ ...styles.videoWrapper, borderColor: borderColor }}>
@@ -149,7 +139,7 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
               {status === "error" ? (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={COLORS.error}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
-                  Code incorrect, réessayez.
+                  Incorrect code, try again.
                 </>
               ) : (
                 <>
@@ -164,11 +154,11 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
             <div style={styles.successContainer}>
               <div style={{ color: COLORS.success, display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 'bold', marginBottom: 15 }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill={COLORS.success}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
-                Code reconnu avec succès !
+                Code recognized successfully!
               </div>
               {/* --- Bouton de confirmation --- */}
               <button onClick={handleConfirmClick} style={styles.confirmButton}>
-                Confirmer {action}
+                Confirm {action}
               </button>
             </div>
           )}
@@ -177,7 +167,7 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
           {status === "sending" && (
             <div style={{ color: COLORS.primary, display: 'flex', alignItems: 'center', gap: 8, fontWeight: '600' }}>
               <LoadingIcon width="24" height="24" style={{ animation: 'spin 1s linear infinite' }} />
-              Envoi de la présence au serveur...
+              Sending presence to server...
             </div>
           )}
 
@@ -193,7 +183,7 @@ export default function QRScannerModal({ isOpen, onClose, correctQR, onSuccess, 
 
               {/* Bouton pour rescanner أو fermer */}
               <button onClick={apiResult.success ? handleCloseInternal : handleScanAgain} style={{ ...styles.confirmButton, backgroundColor: apiResult.success ? COLORS.primary : '#6b7280', maxWidth: 200 }}>
-                {apiResult.success ? 'Terminé' : 'Scanner à nouveau'}
+                {apiResult.success ? 'Finished' : 'Scan again'}
               </button>
             </div>
           )}

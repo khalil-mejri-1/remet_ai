@@ -1,402 +1,377 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE_URL from '../config';
 
-// --- ICONS SVG (Non modifiés) ---
-const PlusIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="5" x2="12" y2="19"></line>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-  </svg>
-);
+// --- ICONS (Optimisés) ---
+const PlusIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+const EditIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
+const TrashIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
+const XIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
 
-const EditIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-  </svg>
-);
+const API_URL = `${API_BASE_URL}/api/speakers`;
+const USER_ROLE_CHECK_URL = `${API_BASE_URL}/api/user/role`;
 
-const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-  </svg>
-);
-
-const XIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18"></line>
-    <line x1="6" y1="6" x2="18" y2="18"></line>
-  </svg>
-);
-
-// ===== URL BASE API =====
-const API_URL = "https://remet-ai-nate.vercel.app/api/speakers";
-  const USER_ROLE_CHECK_URL = "https://remet-ai-nate.vercel.app/api/user/role";
-
-
-// ===== Speaker Card Component (Non modifié) =====
+// ===== Speaker Card Component =====
 const SpeakerCard = ({ speaker, onUpdate, onDelete, isAdmin }) => {
-  const titleClass = speaker.expertType === "expert" ? "expert-title" : "ia-title";
+    const isIA = speaker.expertType === "ia";
+    const typeLabel = isIA ? "Intelligent Systems Expert" : "Subject Matter Expert";
 
-  return (
-    <div className="speaker-card">
-      <div className="speaker-photo-placeholder">
-        {speaker.image ? <img src={speaker.image} alt={speaker.name} className="speaker-real-img" /> : <span className="photo-text">Photo</span>}
-      </div>
+    return (
+        <div className={`ai-speaker-card ${isIA ? 'type-ia' : 'type-expert'}`}>
+            <div className="card-glow"></div>
+            <div className="card-inner">
+                <div className="tag-container">
+                    <span className="ai-badge">{typeLabel}</span>
+                </div>
+                <h3 className="ai-name">{speaker.name}</h3>
+                <h4 className="ai-title">{speaker.title}</h4>
+                <p className="ai-description">{speaker.description}</p>
 
-      <div className="speaker-details">
-        <h3 className="speaker-name">{speaker.name}</h3>
-        <p className={`speaker-title ${titleClass}`}>{speaker.title}</p>
-        <p className="speaker-description">{speaker.description}</p>
-      </div>
-
-      {/* عرض الأزرار فقط إذا كان isAdmin صحيحًا */}
-      {isAdmin && (
-        <div className="ab-card-actions">
-          <button className="ab-action-btn update" onClick={() => onUpdate(speaker)}>
-            <EditIcon /> Update
-          </button>
-          <button className="ab-action-btn delete" onClick={() => onDelete(speaker._id)}>
-            <TrashIcon /> Delete
-          </button>
-        </div>
-      )}
-    </div>
-  );
+                {isAdmin && (
+                    <div className="ai-card-actions">
+                        <button className="btn-icon update" onClick={() => onUpdate(speaker)} title="Edit">
+                            <EditIcon />
+                        </button>
+                        <button className="btn-icon delete" onClick={() => onDelete(speaker._id)} title="Delete">
+                            <TrashIcon />
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
 
-// ===== Main Component (Speakers) =====
+// ===== Main Component =====
 export default function Speakers() {
-  const [speakers, setSpeakers] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentSpeaker, setCurrentSpeaker] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  // État de chargement initial pour les données
-  const [isLoading, setIsLoading] = useState(true); 
-  // État de chargement pour les soumissions de modal
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+    const [speakers, setSpeakers] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentSpeaker, setCurrentSpeaker] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const fetchSpeakers = async () => {
+        setIsLoading(true);
+        try {
+            const res = await axios.get(API_URL);
+            setSpeakers(res.data);
+        } catch (err) { console.error(err); }
+        finally { setIsLoading(false); }
+    };
 
-  // --- GET ALL SPEAKERS ---
-  const fetchSpeakers = async () => {
-    setIsLoading(true); // Début du chargement
-    try {
-      const res = await axios.get(API_URL);
-      setSpeakers(res.data);
-    } catch (err) {
-      console.error("Error fetching speakers:", err);
-    } finally {
-      setIsLoading(false); // Fin du chargement
-    }
-  };
-
-  // --- CHECK USER ROLE (Non modifié) ---
-  const checkUserRole = async () => {
-    const userEmail = localStorage.getItem("userEmail");
-
-    if (userEmail) {
-      try {
-        const res = await axios.get(`${USER_ROLE_CHECK_URL}/${userEmail}`);
-
-        if (res.data && res.data.role === "admin") {
-          setIsAdmin(true); 
-        } else {
-          setIsAdmin(false);
-        }
-      } catch (err) {
-        console.error("Error checking user role:", err);
-        setIsAdmin(false); 
-      }
-    } else {
-      setIsAdmin(false);
-    }
-  };
-
-
-  useEffect(() => {
-    fetchSpeakers();
-    checkUserRole(); 
-  }, []); 
-
-  // --- DELETE SPEAKER ---
-  const handleDelete = async (id) => {
-    if (!isAdmin) {
-      alert("Vous n'êtes pas autorisé à effectuer cette action."); 
-      return;
-    }
-
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce speaker ?")) {
-        setIsSubmitting(true); // Début du chargement pour la suppression
-      try {
-        await axios.delete(`${API_URL}/${id}`);
-        setSpeakers(speakers.filter((s) => s._id !== id));
-      } catch (err) {
-        console.error("Delete failed:", err);
-        alert("La suppression a échoué.");
-      } finally {
-            setIsSubmitting(false); // Fin du chargement
+    const checkUserRole = async () => {
+        const email = localStorage.getItem("userEmail");
+        if (email) {
+            try {
+                const res = await axios.get(`${USER_ROLE_CHECK_URL}/${email}`);
+                setIsAdmin(res.data?.role === "admin");
+            } catch (err) { setIsAdmin(false); }
         }
-    }
-  };
+    };
 
-  // --- ADD / UPDATE SPEAKER MODAL ---
-  const handleAddClick = () => {
-    if (!isAdmin) return; 
-    setCurrentSpeaker({ name: "", title: "", description: "", expertType: "ia", image: "" });
-    setIsModalOpen(true);
-  };
+    useEffect(() => {
+        fetchSpeakers();
+        checkUserRole();
+    }, []);
 
-  const handleUpdateClick = (speaker) => {
-    if (!isAdmin) return; 
-    setCurrentSpeaker({ ...speaker });
-    setIsModalOpen(true);
-  };
+    const handleDelete = async (id) => {
+        if (!isAdmin || !window.confirm("Delete this speaker profile?")) return;
+        setIsSubmitting(true);
+        try {
+            await axios.delete(`${API_URL}/${id}`);
+            setSpeakers(speakers.filter(s => s._id !== id));
+        } catch (err) { alert("Error deleting speaker"); }
+        finally { setIsSubmitting(false); }
+    };
 
-  const handleModalChange = (e) => {
-    const { name, value } = e.target;
-    setCurrentSpeaker((prev) => ({ ...prev, [name]: value }));
-  };
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            if (currentSpeaker._id) {
+                const res = await axios.put(`${API_URL}/${currentSpeaker._id}`, currentSpeaker);
+                setSpeakers(speakers.map(s => s._id === currentSpeaker._id ? res.data : s));
+            } else {
+                const res = await axios.post(API_URL, currentSpeaker);
+                setSpeakers([...speakers, res.data]);
+            }
+            setIsModalOpen(false);
+        } catch (err) { alert("Error saving speaker"); }
+        finally { setIsSubmitting(false); }
+    };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!isAdmin) return; 
-    
-    setIsSubmitting(true); // Début du chargement pour l'enregistrement
+    return (
+        <section className="ai-section">
+            <div className="ai-container">
+                <div className="ai-header">
+                    <div className="title-stack">
+                        <span className="ai-subtitle">Visionary Minds</span>
+                        <h2 className="ai-main-title">Shaping the Future of <span className="text-gradient">Intelligence</span></h2>
+                    </div>
 
-    try {
-      if (currentSpeaker._id) {
-        // Update
-        const res = await axios.put(`${API_URL}/${currentSpeaker._id}`, currentSpeaker);
-        setSpeakers(speakers.map((s) => (s._id === currentSpeaker._id ? res.data : s)));
-      } else {
-        // Create
-        const res = await axios.post(API_URL, currentSpeaker);
-        setSpeakers([...speakers, res.data]);
-      }
-      setIsModalOpen(false);
-      setCurrentSpeaker(null);
-    } catch (err) {
-      console.error("Save failed:", err);
-      alert("L'enregistrement a échoué.");
-    } finally {
-        setIsSubmitting(false); // Fin du chargement
-    }
-  };
+                    {isAdmin && (
+                        <button className="ai-btn-primary" onClick={() => {
+                            setCurrentSpeaker({ name: "", title: "", description: "", expertType: "ia" });
+                            setIsModalOpen(true);
+                        }}>
+                            <PlusIcon /> <span>Add Expert</span>
+                        </button>
+                    )}
+                </div>
 
-  return (
-    <section className="speakers-section">
-      <div className="speakers-header-wrapper">
-        <h2 className="section-title">Speakers</h2>
+                <div className="ai-grid">
+                    {isLoading ? (
+                        [1, 2, 3].map(i => <div key={i} className="ai-speaker-card skeleton"></div>)
+                    ) : speakers.length === 0 ? (
+                        <p className="empty-state">No speakers found in the database.</p>
+                    ) : (
+                        speakers.map(s => (
+                            <SpeakerCard
+                                key={s._id}
+                                speaker={s}
+                                isAdmin={isAdmin}
+                                onDelete={handleDelete}
+                                onUpdate={(speaker) => {
+                                    setCurrentSpeaker(speaker);
+                                    setIsModalOpen(true);
+                                }}
+                            />
+                        ))
+                    )}
+                </div>
+            </div>
 
-        {/* Affichage du bouton Add Speaker seulement si isAdmin est vrai ET non en soumission */}
-        {isAdmin && (
-          <button className="ab-add-member-btn" onClick={handleAddClick} disabled={isSubmitting} style={{margin:"auto",marginBottom:"40px"}}>
-            <PlusIcon /> {isSubmitting ? "Chargement..." : "Add Speaker"}
-          </button>
-        )}
-      </div>
+            {isModalOpen && (
+                <div className="ai-modal-overlay">
+                    <div className="ai-modal">
+                        <div className="modal-header">
+                            <h3>{currentSpeaker?._id ? "Update Profile" : "New Speaker"}</h3>
+                            <button className="close-x" onClick={() => setIsModalOpen(false)}><XIcon /></button>
+                        </div>
+                        <form onSubmit={handleSave} className="ai-form">
+                            <div className="input-group">
+                                <label>Full Name</label>
+                                <input required value={currentSpeaker.name} onChange={e => setCurrentSpeaker({ ...currentSpeaker, name: e.target.value })} placeholder="e.g. Dr. Sarah Chen" />
+                            </div>
+                            <div className="input-group">
+                                <label>Expertise Title</label>
+                                <input required value={currentSpeaker.title} onChange={e => setCurrentSpeaker({ ...currentSpeaker, title: e.target.value })} placeholder="e.g. Lead Research Scientist" />
+                            </div>
+                            <div className="input-group">
+                                <label>Category</label>
+                                <select value={currentSpeaker.expertType} onChange={e => setCurrentSpeaker({ ...currentSpeaker, expertType: e.target.value })}>
+                                    <option value="ia">AI Architect (Purple)</option>
+                                    <option value="expert">Subject Expert (Green)</option>
+                                </select>
+                            </div>
+                            <div className="input-group">
+                                <label>Short Biography</label>
+                                <textarea rows="4" value={currentSpeaker.description} onChange={e => setCurrentSpeaker({ ...currentSpeaker, description: e.target.value })} placeholder="Describe their impact..." />
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                                <button type="submit" className="ai-btn-primary" disabled={isSubmitting}>
+                                    {isSubmitting ? "Processing..." : "Save Changes"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
-      <div className="speakers-grid">
-        {/* Affichage de l'état de chargement initial */}
-        {isLoading ? (
+            <style>{`
+                :root {
+                    --ai-primary: #6366f1;
+                    --ai-secondary: #10b981;
+                    --ai-dark: #0f172a;
+                    --ai-card-bg: #ffffff;
+                    --ai-text-main: #1e293b;
+                    --ai-text-muted: #64748b;
+                }
 
+                .ai-section {
+                    padding: 40px 20px;
+                    background: #f8fafc;
+                    font-family: 'Inter', -apple-system, sans-serif;
+                }
 
+                .ai-container { max-width: 1200px; margin: 0 auto; }
 
-  <div className="speaker-card">
-      <div className="speaker-photo-placeholder">
-         <img src=""  className="speaker-real-img" /> 
-      </div>
+                .ai-header {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    margin-bottom: 25px;
+                    gap: 30px;
+                }
 
-     <div className="speaker-details">
-    <h3 className="speaker-name loading-skeleton"></h3>
-    <p className="speaker-title loading-skeleton"></p>
-    <p className="speaker-description loading-skeleton"></p>
-</div>
-      
-    </div>
-      
-      
-          ) : speakers.length === 0 ? (
-            <div className="no-speakers-message" style={{textAlign:"center"}}>Aucun speaker trouvé. {isAdmin && "Cliquez sur 'Add Speaker' pour commencer."}</div>
-        ) : (
-          speakers.map((speaker) => (
-            <SpeakerCard
-              key={speaker._id}
-              speaker={speaker}
-              onUpdate={handleUpdateClick}
-              onDelete={handleDelete}
-              isAdmin={isAdmin} 
-            />
-          ))
-        )}
-      </div>
+                .ai-subtitle {
+                    text-transform: uppercase;
+                    letter-spacing: 3px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: var(--ai-primary);
+                }
 
-      {isModalOpen && currentSpeaker && isAdmin && ( 
-        <div className="ks-modal-overlay">
-          <div className="ks-modal-content">
-            <div className="ks-modal-header">
-              <h3>{currentSpeaker._id ? "Edit Speaker" : "Add Speaker"}</h3>
-              <button className="ks-close-btn" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
-                <XIcon />
-              </button>
-            </div>
+                .ai-main-title {
+                    font-size: 2.5rem;
+                    font-weight: 900;
+                    color: var(--ai-dark);
+                    margin-top: 8px;
+                }
 
-            <form onSubmit={handleSave} className="ks-modal-form">
-              <div className="ks-form-group">
-                <label>Full Name</label>
-                <input type="text" name="name" value={currentSpeaker.name} onChange={handleModalChange} required disabled={isSubmitting} />
-              </div>
+                .text-gradient {
+                    background: linear-gradient(90deg, var(--ai-primary), #a855f7);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
 
-              <div className="ks-form-group">
-                <label>Title</label>
-                <input type="text" name="title" value={currentSpeaker.title} onChange={handleModalChange} required disabled={isSubmitting} />
-              </div>
+                /* GRID & CARDS */
+                .ai-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                    gap: 32px;
+                }
 
-              <div className="ks-form-group">
-                <label>Expert Type</label>
-                <select name="expertType" value={currentSpeaker.expertType} onChange={handleModalChange} disabled={isSubmitting}>
-                  <option value="ia">IA (Bleu)</option>
-                  <option value="expert">Expert (Vert)</option>
-                </select>
-              </div>
+                .ai-speaker-card {
+                    background: var(--ai-card-bg);
+                    border-radius: 24px;
+                    position: relative;
+                    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+                    border: 1px solid rgba(0,0,0,0.05);
+                    z-index: 1;
+                }
 
-              <div className="ks-form-group">
-                <label>Image URL (Optional)</label>
-                <input type="text" name="image" value={currentSpeaker.image || ""} onChange={handleModalChange} placeholder="https://..." disabled={isSubmitting} />
-              </div>
+                .ai-speaker-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1);
+                }
 
-              <div className="ks-form-group">
-                <label>Description</label>
-                <textarea name="description" value={currentSpeaker.description} onChange={handleModalChange} rows="3" disabled={isSubmitting} />
-              </div>
+                .card-inner { padding: 40px; position: relative; z-index: 2; }
 
-              <div className="ks-modal-actions">
-                <button type="button" className="ks-cancel-btn" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Cancel</button>
-                <button type="submit" className="ks-save-btn" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                .ai-badge {
+                    padding: 6px 14px;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    border-radius: 100px;
+                    text-transform: uppercase;
+                    background: rgba(99, 102, 241, 0.08);
+                    color: var(--ai-primary);
+                }
 
-      {/* --- STYLES ADDITIONNELS --- */}
-      <style>{`
-        /* ... Styles existants ... */
+                .type-expert .ai-badge {
+                    background: rgba(16, 185, 129, 0.08);
+                    color: var(--ai-secondary);
+                }
 
-        .loading-message, .no-speakers-message {
-            grid-column: 1 / -1; /* Permet d'occuper toute la largeur du grid */
-            text-align: center;
-            padding: 40px 0;
-            font-size: 1.1rem;
-            color: #ccc;
-        }
+                .ai-name { font-size: 1.6rem; font-weight: 800; color: var(--ai-dark); margin: 20px 0 5px; }
+                .ai-title { color: var(--ai-primary); font-size: 0.95rem; font-weight: 600; margin-bottom: 20px; }
+                .type-expert .ai-title { color: var(--ai-secondary); }
+                .ai-description { color: var(--ai-text-muted); line-height: 1.7; font-size: 0.95rem; }
 
-        .sp-modal-actions button[type="submit"]:disabled {
-            background: #4f46e5;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        
-        /* Assurez-vous d'inclure les styles originaux ici pour ne pas les perdre */
-        
-        .speaker-card {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
+                /* ACTIONS */
+                .ai-card-actions {
+                    margin-top: 30px;
+                    display: flex;
+                    gap: 10px;
+                    border-top: 1px solid #f1f5f9;
+                    padding-top: 20px;
+                }
 
-        .speaker-real-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: inherit;
-            display: block;
-        }
+                .btn-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 12px;
+                    border: none;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: 0.2s;
+                    background: #f1f5f9;
+                    color: var(--ai-text-muted);
+                }
 
-        .speakers-header-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 40px;
-            text-align: center;
-        }
+                .btn-icon.update:hover { background: var(--ai-primary); color: white; }
+                .btn-icon.delete:hover { background: #ef4444; color: white; }
 
-        .sp-add-btn {
-            margin-top: 15px;
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 25px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
-            transition: transform 0.2s;
-        }
-        .sp-add-btn:hover { transform: scale(1.05); }
+                /* MODAL MODERN */
+                .ai-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.8);
+                    backdrop-filter: blur(8px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                    padding: 20px;
+                }
 
-        .sp-card-actions {
-            margin-top: auto; 
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            gap: 10px;
-        }
-        .sp-action-btn {
-            flex: 1;
-            padding: 6px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-            background: rgba(255,255,255,0.05);
-            color: #ffffff;
-            transition: all 0.2s;
-        }
-        .sp-action-btn.update:hover { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
-        .sp-action-btn.delete:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+                .ai-modal {
+                    background: white;
+                    width: 100%;
+                    max-width: 550px;
+                    border-radius: 28px;
+                    overflow: hidden;
+                    animation: modalSlide 0.4s ease-out;
+                }
 
-        .sp-modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px);
-            z-index: 9999; display: flex; justify-content: center; align-items: center;
-        }
-        .sp-modal-content {
-            background: #252530; border: 1px solid rgba(255,255,255,0.1);
-            width: 90%; max-width: 400px; padding: 25px; border-radius: 12px;
-            color: white; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-        .sp-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .sp-close-btn { background: none; border: none; color: #aaa; cursor: pointer; }
-        .sp-close-btn:hover { color: white; }
-        .sp-form-group { margin-bottom: 12px; text-align: left; }
-        .sp-form-group label { display: block; margin-bottom: 5px; color: #ffffffff; font-size: 0.9rem; }
-        .sp-form-group input, .sp-form-group textarea, .sp-select {
-            width: 100%; padding: 8px; background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
-            color: white; outline: none; font-family: inherit;
-        }
-        .sp-modal-actions { display: flex; gap: 10px; margin-top: 20px; color:white}
-        .sp-modal-actions button[type="submit"] { flex: 1; background: #6366f1; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
-        .sp-modal-actions button[type="submit"]:hover { background: #4f46e5; }
-        .sp-modal-actions button[type="button"] { flex: 1; background: transparent; border: 1px solid #555; color: #ffffffff; padding: 10px; border-radius: 6px; cursor: pointer; transition: border-color 0.2s; }
-        .sp-modal-actions button[type="button"]:hover { border-color: #999; color: white; }
+                @keyframes modalSlide { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
+                .modal-header {
+                    padding: 25px 35px;
+                    background: #f8fafc;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #e2e8f0;
+                }
 
+                .ai-form { padding: 35px; }
+                .input-group { margin-bottom: 20px; }
+                .input-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 8px; color: var(--ai-dark); }
+                .input-group input, .input-group select, .input-group textarea {
+                    width: 100%;
+                    padding: 12px 16px;
+                    border: 2px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    transition: 0.2s;
+                    box-sizing: border-box;
+                }
+                .input-group input:focus { border-color: var(--ai-primary); outline: none; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
 
+                .ai-btn-primary {
+                    background: var(--ai-dark);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 14px;
+                    border: none;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    transition: 0.3s;
+                }
+                .ai-btn-primary:hover { transform: scale(1.02); background: #000; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+                
+                .btn-secondary { background: none; border: none; font-weight: 600; color: var(--ai-text-muted); cursor: pointer; }
 
+                .modal-footer { display: flex; justify-content: flex-end; gap: 20px; margin-top: 30px; align-items: center; }
 
-      `}</style>
-    </section>
-  );
+                /* Skeleton Animation */
+                .skeleton {
+                    height: 350px;
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: loading 1.5s infinite;
+                }
+                @keyframes loading { to { background-position: -200% 0; } }
+            `}</style>
+        </section>
+    );
 }

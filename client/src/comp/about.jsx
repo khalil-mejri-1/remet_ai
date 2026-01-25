@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 // Configuration API URL (Make sure your Node server is running on port 5000)
 // Nous allons ajouter un endpoint pour vérifier le rôle de l'utilisateur par email.
-const API_URL = 'https://remet-ai-nate.vercel.app/api';
+import API_BASE_URL from '../config';
+const API_URL = `${API_BASE_URL}/api`;
 
 const About = () => {
   // --- STATE ---
@@ -135,9 +136,8 @@ const About = () => {
     if (!isAdmin) return; // Sécurité
     try {
       const newMemberData = {
-        name: "Nouveau Membre",
-        role: "Role à définir",
-        image: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&w=400&q=80"
+        name: "New Visionary",
+        role: "Architecture Specialist"
       };
 
       const res = await fetch(`${API_URL}/team`, {
@@ -259,45 +259,24 @@ const About = () => {
             </div>
 
             <div className="ab-team-grid">
-
-              <div className="ab-team-card">
-                <div className="ab-img-ring-container">
-                  <div className="ab-img-ring"></div>
-                  <img src="https://img.freepik.com/photos-gratuite/arriere-plan-gris-lisse-haute-qualite_53876-124606.jpg?uid=R146232678&ga=GA1.1.468840471.1762219905&semt=ais_hybrid&w=740&q=80" className="ab-member-img" />
+              <div className="ab-team-card-modern">
+                <div className="ab-member-info">
+                  <h3 className="ab-member-name-modern loading-skeleton"></h3>
+                  <div className="ab-role-badge loading-skeleton"></div>
                 </div>
-
-         <div style={{maxWidth:"400px",margin:"auto", border:"red solid 0px"}}>
-
-         <h3 className="speaker-name loading-skeleton"></h3>
-                <p className="speaker-title loading-skeleton"></p>
-</div>
                 <div className="ab-social-dots">
                   <span></span><span></span><span></span>
                 </div>
-
-                {/* AFFICHAGE CONDITIONNEL POUR Update et Delete */}
-
               </div>
-              <div className="ab-team-card">
-                <div className="ab-img-ring-container">
-                  <div className="ab-img-ring"></div>
-                  <img src="https://img.freepik.com/photos-gratuite/arriere-plan-gris-lisse-haute-qualite_53876-124606.jpg?uid=R146232678&ga=GA1.1.468840471.1762219905&semt=ais_hybrid&w=740&q=80" className="ab-member-img" />
+              <div className="ab-team-card-modern">
+                <div className="ab-member-info">
+                  <h3 className="ab-member-name-modern loading-skeleton"></h3>
+                  <div className="ab-role-badge loading-skeleton"></div>
                 </div>
-<div style={{maxWidth:"400px",margin:"auto", border:"red solid 0px"}}>
-
-         <h3 className="speaker-name loading-skeleton"></h3>
-                <p className="speaker-title loading-skeleton"></p>
-</div>
-         
-
                 <div className="ab-social-dots">
                   <span></span><span></span><span></span>
                 </div>
-
-                {/* AFFICHAGE CONDITIONNEL POUR Update et Delete */}
-
               </div>
-
             </div>
           </section>
 
@@ -316,29 +295,42 @@ const About = () => {
 
       {/* Hero Section */}
       <section className="ab-hero-section">
+        <div className="ab-hero-blob"></div>
         <div className="ab-hero-content">
-          <span className="ab-badge">Our Vision</span>
-          <h1 className="ab-hero-title">Intelligence<br /><span className="ab-text-gradient">at the Service of Humanity.</span></h1>
+          <span className="ab-badge">The Future starts Here</span>
+          <h1 className="ab-hero-title">
+            Driving <span className="ab-text-gradient">Intelligence</span><br />
+            Beyond Boundaries
+          </h1>
           <p className="ab-hero-desc">
-            We combine advanced algorithms with intuitive design to create the solutions of tomorrow.
+            We bridge the gap between cutting-edge research and real-world application,
+            cultivating a ecosystem where human expertise meets artificial potential.
           </p>
         </div>
 
         <div className="ab-hero-visual">
-          <div className="ab-img-container-tech">
-            <img
-              src={heroImage || "https://via.placeholder.com/600"}
-              alt="AI Vision"
-              className="ab-hero-img"
-            />
-            {/* AFFICHAGE CONDITIONNEL POUR Update Vision */}
-            {isAdmin && (
-              <button className="ab-hero-edit-btn" onClick={handleUpdateHeroImage}>
-                <CameraIcon /> <span>Updated Vision</span>
-              </button>
-            )}
-            <div className="ab-tech-card float-1"><span style={{ fontWeight: "700" }}>REMET - AI</span></div>
-            <div className="ab-tech-dots"></div>
+          <div className="ab-photo-frame">
+            <div className="ab-rotating-ring"></div>
+            <div className="ab-corner-bracket top-l"></div>
+            <div className="ab-corner-bracket top-r"></div>
+            <div className="ab-corner-bracket bot-l"></div>
+            <div className="ab-corner-bracket bot-r"></div>
+
+            <div className="frame-accent-1"></div>
+            <div className="frame-accent-2"></div>
+            <div className="ab-img-wrapper">
+              <div className="ab-scanline-overlay"></div>
+              <img
+                src={heroImage || "https://img.freepik.com/photos-gratuite/arriere-plan-gris-lisse-haute-qualite_53876-124606.jpg"}
+                alt="AI Vision"
+                className="ab-hero-img"
+              />
+              {isAdmin && (
+                <button className="ab-hero-edit-btn" onClick={handleUpdateHeroImage}>
+                  <CameraIcon /> <span>Update Vision</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -360,14 +352,14 @@ const About = () => {
 
         <div className="ab-team-grid">
           {teamMembers.map(member => (
-            <div key={member._id} className="ab-team-card">
-              <div className="ab-img-ring-container">
-                <div className="ab-img-ring"></div>
-                <img src={member.image} alt={member.name} className="ab-member-img" />
+            <div key={member._id} className="ab-team-card-modern">
+              <div className="ab-card-glow"></div>
+              <div className="ab-member-info">
+                <h3 className="ab-member-name-modern">{member.name}</h3>
+                <div className="ab-role-badge">
+                  {member.role}
+                </div>
               </div>
-
-              <h3 className="ab-member-name">{member.name}</h3>
-              <p className="ab-member-role">{member.role}</p>
 
               <div className="ab-social-dots">
                 <span></span><span></span><span></span>
@@ -397,17 +389,17 @@ const About = () => {
 
       {/* --- MODAL 1: EDIT TEAM MEMBER (Affiche seulement si Admin) --- */}
       {isAdmin && isEditModalOpen && currentMember && (
-        <div className="ab-modal-overlay">
-          <div className="ab-modal-content">
-            <div className="ab-modal-header">
-              <h3>Edit Profile</h3>
-              <button className="ab-close-btn" onClick={() => setIsEditModalOpen(false)}>
+        <div className="ai-modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="ai-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Update Team Member</h3>
+              <button className="close-x" onClick={() => setIsEditModalOpen(false)}>
                 <XIcon />
               </button>
             </div>
 
-            <form onSubmit={handleSaveChanges} className="ab-modal-form">
-              <div className="ab-form-group">
+            <form onSubmit={handleSaveChanges} className="ai-form">
+              <div className="input-group">
                 <label>Full Name</label>
                 <input
                   type="text"
@@ -415,52 +407,45 @@ const About = () => {
                   value={currentMember.name}
                   onChange={handleModalChange}
                   required
+                  placeholder="e.g. Dr. Sarah Chen"
                 />
               </div>
 
-              <div className="ab-form-group">
+              <div className="input-group">
                 <label>Role</label>
                 <input
                   type="text"
                   name="role"
+                  placeholder="e.g. Lead Architect"
                   value={currentMember.role}
                   onChange={handleModalChange}
                   required
                 />
               </div>
 
-              <div className="ab-form-group">
-                <label>Image URL</label>
-                <input
-                  type="text"
-                  name="image"
-                  value={currentMember.image}
-                  onChange={handleModalChange}
-                />
-              </div>
-
-              <div className="ab-modal-actions">
-                <button type="button" className="ab-cancel-btn" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
-                <button type="submit" className="ab-save-btn">Save </button>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
+                <button type="submit" className="ai-btn-primary">Save Changes</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+
       {/* --- MODAL 2: UPDATE HERO IMAGE (Affiche seulement si Admin) --- */}
       {isAdmin && isHeroModalOpen && (
-        <div className="ab-modal-overlay">
-          <div className="ab-modal-content">
-            <div className="ab-modal-header">
-              <h3>Change Vision Image</h3>
-              <button className="ab-close-btn" onClick={() => setIsHeroModalOpen(false)}>
+        <div className="ai-modal-overlay" onClick={() => setIsHeroModalOpen(false)}>
+          <div className="ai-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Update Vision Image</h3>
+              <button className="close-x" onClick={() => setIsHeroModalOpen(false)}>
                 <XIcon />
               </button>
             </div>
 
-            <form onSubmit={handleSaveHeroImage} className="ab-modal-form">
-              <div className="ab-form-group">
+            <form onSubmit={handleSaveHeroImage} className="ai-form">
+              <div className="input-group">
                 <label>New Image URL</label>
                 <input
                   type="text"
@@ -471,9 +456,9 @@ const About = () => {
                 />
               </div>
 
-              <div className="ab-modal-actions">
-                <button type="button" className="ab-cancel-btn" onClick={() => setIsHeroModalOpen(false)}>Cancel</button>
-                <button type="submit" className="ab-save-btn">Update</button>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsHeroModalOpen(false)}>Cancel</button>
+                <button type="submit" className="ai-btn-primary">Save Changes</button>
               </div>
             </form>
           </div>
@@ -482,13 +467,220 @@ const About = () => {
 
       {/* STYLES CSS AJOUTÉS (UNCHANGED) */}
       <style>{`
+                /* --- MODERN FUTURISTIC HERO --- */
+                .ab-hero-section {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 60px 8%;
+                    min-height: auto;
+                    position: relative;
+                    gap: 60px;
+                    overflow: hidden;
+                }
+
+                .ab-hero-blob {
+                    position: absolute;
+                    top: 10%;
+                    left: -10%;
+                    width: 500px;
+                    height: 500px;
+                    background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+                    border-radius: 50%;
+                    filter: blur(60px);
+                    z-index: 0;
+                }
+
+                .ab-hero-content {
+                    flex: 1;
+                    position: relative;
+                    z-index: 2;
+                }
+
+                .ab-hero-title {
+                    font-size: 3.5rem;
+                    font-weight: 800;
+                    line-height: 1.1;
+                    color: #0f172a;
+                    margin: 20px 0;
+                    letter-spacing: -0.04em;
+                }
+
+                .ab-hero-desc {
+                    font-size: 1.1rem;
+                    line-height: 1.7;
+                    color: #64748b;
+                    max-width: 540px;
+                    margin-bottom: 40px;
+                }
+
+                .ab-hero-visual {
+                    flex: 1;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    position: relative;
+                    z-index: 2;
+                }
+
+                .ab-photo-frame {
+                    position: relative;
+                    width: 100%;
+                    max-width: 520px;
+                    padding: 15px;
+                }
+
+                .ab-img-wrapper {
+                    position: relative;
+                    border-radius: 40px;
+                    overflow: hidden;
+                    box-shadow: 0 40px 100px rgba(15, 23, 42, 0.15);
+                    background: #ffffff;
+                    z-index: 2;
+                    aspect-ratio: 4/3;
+                }
+
+                .ab-hero-img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: all 0.8s cubic-bezier(0.2, 0, 0.2, 1);
+                }
+
+                .ab-img-wrapper:hover .ab-hero-img {
+                    transform: scale(1.05);
+                    filter: saturate(1.2) brightness(1.1);
+                }
+
+                /* --- ADVANCED TECH EFFECTS --- */
+                .ab-rotating-ring {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 110%;
+                    height: 110%;
+                    border: 2px dashed rgba(99, 102, 241, 0.15);
+                    border-radius: 50%;
+                    z-index: 1;
+                    animation: rotateRing 20s linear infinite;
+                }
+
+                @keyframes rotateRing {
+                    from { transform: translate(-50%, -50%) rotate(0deg); }
+                    to { transform: translate(-50%, -50%) rotate(360deg); }
+                }
+
+                .ab-corner-bracket {
+                    position: absolute;
+                    width: 30px;
+                    height: 30px;
+                    border: 3px solid #6366f1;
+                    z-index: 4;
+                    pointer-events: none;
+                    transition: all 0.3s ease;
+                }
+
+                .top-l { top: -5px; left: -5px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+                .top-r { top: -5px; right: -5px; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
+                .bot-l { bottom: -5px; left: -5px; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
+                .bot-r { bottom: -5px; right: -5px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+
+                .ab-photo-frame:hover .ab-corner-bracket {
+                    width: 40px;
+                    height: 40px;
+                    border-color: #a855f7;
+                }
+
+                .ab-scanline-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(
+                        to bottom,
+                        transparent 0%,
+                        rgba(99, 102, 241, 0.05) 50%,
+                        transparent 100%
+                    );
+                    background-size: 100% 200%;
+                    z-index: 5;
+                    pointer-events: none;
+                    animation: techScan 4s linear infinite;
+                }
+
+                @keyframes techScan {
+                    0% { background-position: 0% -100%; }
+                    100% { background-position: 0% 100%; }
+                }
+
+                /* Decor Elements */
+                .frame-accent-1 {
+                    position: absolute;
+                    top: -20px;
+                    right: -20px;
+                    width: 120px;
+                    height: 120px;
+                    background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+                    opacity: 0.15;
+                    filter: blur(20px);
+                    z-index: 1;
+                }
+
+                .frame-accent-2 {
+                    position: absolute;
+                    bottom: -30px;
+                    left: -30px;
+                    width: 180px;
+                    height: 180px;
+                    border: 2px solid rgba(168, 85, 247, 0.1);
+                    border-radius: 50%;
+                    z-index: 1;
+                }
+
+                .ab-floating-tag {
+                    position: absolute;
+                    bottom: 40px;
+                    right: -20px;
+                    background: rgba(15, 23, 42, 0.9);
+                    backdrop-filter: blur(10px);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 100px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    letter-spacing: 0.1em;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+                    z-index: 10;
+                    border: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .tag-pulse {
+                    width: 8px;
+                    height: 8px;
+                    background: #10b981;
+                    border-radius: 50%;
+                    box-shadow: 0 0 10px #10b981;
+                    animation: pulse 2s infinite;
+                }
+
+                @keyframes pulse {
+                    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+                    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+                    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                }
+
                 /* Header Centré */
                 .ab-team-header-wrapper {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     text-align: center;
-                    margin-bottom: 50px;
+                    margin-bottom: 25px;
                     gap: 20px;
                     max-width: 800px;
                     margin-left: auto;
@@ -516,67 +708,80 @@ const About = () => {
                     box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6);
                 }
 
-                /* --- MODAL STYLES (Glassmorphism) --- */
-                .ab-modal-overlay {
+                /* --- UNIFIED MODAL STYLES (Matching Speaker/Programme Design) --- */
+                .ai-modal-overlay {
                     position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(0, 0, 0, 0.7);
-                    backdrop-filter: blur(5px);
-                    z-index: 1000;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.8);
+                    backdrop-filter: blur(8px);
                     display: flex;
-                    justify-content: center;
                     align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                    padding: 20px;
                 }
 
-                .ab-modal-content {
-                    background: rgba(30, 30, 40, 0.95);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    width: 90%;
-                    max-width: 400px;
-                    padding: 25px;
-                    border-radius: 20px;
-                    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-                    animation: fadeIn 0.3s ease;
-                    color: white;
+                .ai-modal {
+                    background: white;
+                    width: 100%;
+                    max-width: 550px;
+                    border-radius: 28px;
+                    overflow: hidden;
+                    animation: modalSlide 0.4s ease-out;
                 }
 
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
+                @keyframes modalSlide { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-                .ab-modal-header {
+                .modal-header {
+                    padding: 25px 35px;
+                    background: #f8fafc;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 20px;
-                    border-bottom: 1px solid rgba(255,255,255,0.1);
-                    padding-bottom: 10px;
+                    border-bottom: 1px solid #e2e8f0;
                 }
 
-                .ab-close-btn {
-                    background: transparent;
+                .modal-header h3 { margin: 0; font-size: 1.2rem; color: #0f172a; font-weight: 700; }
+                .close-x { background: none; border: none; cursor: pointer; color: #94a3b8; }
+                .close-x:hover { color: #0f172a; }
+
+                .ai-form { padding: 35px; }
+                .input-group { margin-bottom: 20px; }
+                .input-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 8px; color: #0f172a; }
+                .input-group input, .input-group select, .input-group textarea {
+                    width: 100%;
+                    padding: 12px 16px;
+                    border: 2px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    transition: 0.2s;
+                    box-sizing: border-box;
+                }
+                .input-group input:focus, .input-group textarea:focus, .input-group select:focus { 
+                    border-color: #6366f1; 
+                    outline: none; 
+                    box-shadow: 0 0 0 4px rgba(99,102,241,0.1); 
+                }
+
+                .ai-btn-primary {
+                    background: #0f172a;
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 14px;
                     border: none;
-                    color: rgba(255,255,255,0.5);
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
                     cursor: pointer;
-                    transition: color 0.2s;
+                    transition: 0.3s;
                 }
-                .ab-close-btn:hover { color: white; }
+                .ai-btn-primary:hover { transform: scale(1.02); background: #000; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+                
+                .btn-secondary { background: none; border: none; font-weight: 600; color: #64748b; cursor: pointer; }
+                .btn-secondary:hover { color: #0f172a; }
 
-                .ab-form-group {
-                    margin-bottom: 15px;
-                    text-align: left;
-                }
-
-                .ab-form-group label {
-                    display: block;
-                    margin-bottom: 5px;
-                    font-size: 0.85rem;
-                    color: #a5b4fc;
-                }
+                .modal-footer { display: flex; justify-content: flex-end; gap: 20px; margin-top: 30px; align-items: center; }
 
                 .ab-form-group input {
                     width: 100%;
@@ -629,19 +834,154 @@ const About = () => {
                 }
                 .ab-hero-edit-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
 
+                /* --- MODERN TEAM CARDS (No Photo) --- */
+                .ab-team-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                    gap: 25px;
+                    padding: 20px 0;
+                }
+
+                .ab-team-card-modern {
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 24px 20px;
+                    text-align: center;
+                    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+                    position: relative;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 160px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                    z-index: 1;
+                }
+
+                .ab-card-glow {
+                    position: absolute;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
+                    opacity: 0;
+                    transition: opacity 0.5s ease;
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+                .ab-team-card-modern:hover .ab-card-glow {
+                    opacity: 1;
+                }
+
+                .ab-team-card-modern::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    width: 4px;
+                    background: linear-gradient(to bottom, #6366f1, #a855f7);
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+
+                .ab-team-card-modern:hover {
+                    transform: translateY(-8px);
+                    border-color: #6366f1;
+                    box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.1), 0 10px 10px -5px rgba(99, 102, 241, 0.04);
+                }
+
+                .ab-team-card-modern:hover::before {
+                    opacity: 1;
+                }
+
+                .ab-member-info {
+                    margin-bottom: 15px;
+                    z-index: 1;
+                }
+
+                .ab-member-name-modern {
+                    font-size: 1.2rem;
+                    font-weight: 800;
+                    color: #0f172a;
+                    margin-bottom: 8px;
+                    letter-spacing: -0.025em;
+                    line-height: 1.2;
+                }
+
+                .ab-role-badge {
+                    display: inline-block;
+                    padding: 6px 16px;
+                    background: rgba(99, 102, 241, 0.06);
+                    color: #4338ca;
+                    border: 1px solid rgba(99, 102, 241, 0.1);
+                    border-radius: 100px;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    line-height: 1.3;
+                    letter-spacing: 0.01em;
+                    backdrop-filter: blur(4px);
+                    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.05);
+                    transition: all 0.3s ease;
+                }
+
+                .ab-team-card-modern:hover .ab-role-badge {
+                    background: rgba(99, 102, 241, 0.12);
+                    border-color: rgba(99, 102, 241, 0.3);
+                    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+                    transform: scale(1.02);
+                }
+
+                .ab-social-dots {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: center;
+                    margin-top: auto;
+                }
+
+                .ab-social-dots span {
+                    width: 6px;
+                    height: 6px;
+                    background: #cbd5e1;
+                    border-radius: 50%;
+                }
+
                 .ab-card-actions {
-                    display: flex; justify-content: center; gap: 10px; margin-top: 15px;
-                    padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;
+                    display: flex; justify-content: center; gap: 10px; margin-top: 25px;
+                    padding-top: 20px; border-top: 1px solid #f1f5f9; width: 100%;
+                    z-index: 2;
                 }
+
                 .ab-action-btn {
-                    flex: 1; padding: 8px; border-radius: 8px; border: 1px solid transparent;
-                    cursor: pointer; font-size: 0.8rem; display: flex; justify-content: center; align-items: center;
-                    gap: 5px; transition: all 0.2s ease; font-weight: 500;
+                    flex: 1; padding: 10px; border-radius: 12px; border: 1px solid transparent;
+                    cursor: pointer; font-size: 0.85rem; display: flex; justify-content: center; align-items: center;
+                    gap: 6px; transition: all 0.2s ease; font-weight: 600;
                 }
-                .ab-action-btn.update { background: rgba(155, 236, 134, 0.57); color: #0f0f0fff; border-color: rgba(99, 102, 241, 0.2); }
-                .ab-action-btn.update:hover { background:  rgba(154, 236, 134, 1); color: black; }
-                .ab-action-btn.delete { background: rgba(239, 68, 68, 0.4); color: #111111ff; border-color: rgba(239, 68, 68, 0.2); }
-                .ab-action-btn.delete:hover { background: rgba(239, 68, 68, 1); color: black; }
+
+                .ab-action-btn.update { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+                .ab-action-btn.update:hover { background: #6366f1; color: white; border-color: #6366f1; }
+                .ab-action-btn.delete { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+                .ab-action-btn.delete:hover { background: #e11d48; color: white; border-color: #e11d48; }
+
+                /* Loading skeleton adaptations */
+                .loading-skeleton {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 4px;
+                }
+
+                @keyframes skeleton-loading {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+
+                .ab-member-name-modern.loading-skeleton { height: 28px; width: 180px; margin: 0 auto 15px; }
+                .ab-role-badge.loading-skeleton { height: 24px; width: 120px; border: none; box-shadow: none; }
             `}</style>
     </div>
   );

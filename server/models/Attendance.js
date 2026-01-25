@@ -10,8 +10,12 @@ const attendanceSchema = new mongoose.Schema({
     fullName: { type: String, required: true },
     email: { type: String, required: true },
     class: { type: String, default: null },
-    phone: { type: String, default: null },  // <- اضافه الحقل هنا
+    phone: { type: String, default: null },
 
+    checkInTime: { type: Date, default: null },
+    checkOutTime: { type: Date, default: null },
+
+    // Kept for backward compatibility or general tracking
     scanTime: { type: Date, default: Date.now }
 }, { timestamps: true });
 
