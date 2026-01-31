@@ -38,6 +38,16 @@ export default function Hero_main({ onRegisterClick }) {
                     <h1 className="hero-title">REMET-AI</h1>
                     <h2 className="hero-subtitle">WORKSHOP</h2>
 
+                    {/* New Phrase Section within a stylized glass card */}
+                    <div className="hero-phrase-card">
+                        <h3 className="hero-fullname">
+                            <span className="acronym-highlight">RE</span>search{" "}
+                            <span className="acronym-highlight">MET</span>hodologies in{" "}
+                            <span className="acronym-highlight">A</span>rtificial{" "}
+                            <span className="acronym-highlight">I</span>ntelligence
+                        </h3>
+                    </div>
+
                     {/* Description */}
                     <p className="hero-description">
                         REMET-AI is an annual workshop for researchers, academics, and students working in artificial intelligence. REMET'AI'4 brings together leading experts, distinguished speakers, and professional researchers to explore cutting-edge developments in the field. The program combines theoretical presentations with hands-on workshops, giving participants the opportunity to immediately apply new concepts under expert guidance.

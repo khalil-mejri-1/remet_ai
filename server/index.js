@@ -16,6 +16,8 @@ const Session = require('./models/Session');
 const Registration = require('./models/Registration');
 const Attendance = require('./models/Attendance');
 const Program = require('./models/Program');
+const Stats = require('./models/Stats'); // Add Stats model
+const OnlineVisitor = require('./models/OnlineVisitor'); // Add OnlineVisitor model
 
 const app = express();
 
@@ -26,6 +28,12 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+/* -----------------------
+   Stats / Presence Logic (Production Ready)
+----------------------- */
+// In-memory logic removed for Vercel/Serverless compatibility. 
+// Uses OnlineVisitor model with TTL index instead.
 
 /* -----------------------
    Config
@@ -63,7 +71,7 @@ const formatDateTime = (date) => dayjs(date).format('YYYY-MM-DD HH:mm');
 
 
 app.get('/', (req, res) => {
-  res.send('final update_ 1/25/2026')
+  res.send('final update_ 11/29/2025')
 })
 
 
@@ -900,6 +908,51 @@ app.delete('/admin/users/:id', async (req, res) => {
 
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', now: new Date() }));
+
+app.get('/api/stats/visit', async (req, res) => {
+  try {
+    const visitorId = req.query.userId || 'anonymous-' + req.ip;
+
+    // 1. Update/Insérer la présence "Online" dans MongoDB
+    // Le TTL index dans le modèle s'occupera du nettoyage automatique après 5 min
+    await OnlineVisitor.findOneAndUpdate(
+      { visitorId },
+      { lastActive: new Date() },
+      { upsert: true, new: true }
+    );
+
+    // 2. Gérer les statistiques globales
+    let stats = await Stats.findOne();
+    if (!stats) {
+      stats = new Stats({ totalVisits: 250 });
+      await stats.save();
+    } else if (stats.totalVisits < 250) {
+      // S'assurer que ça commence à 250 même si un record à 0 existait déjà
+      stats.totalVisits = 250;
+      await stats.save();
+    }
+
+    // Incrémenter si c'est une nouvelle session
+    if (req.query.isNewSession === 'true') {
+      stats.totalVisits += 1;
+      await stats.save();
+    }
+
+    // 3. Compter les visiteurs réellement en ligne dans la DB
+    const onlineCount = await OnlineVisitor.countDocuments();
+
+    // Console log for debugging (can be removed later)
+    console.log(`[Stats] Visitor: ${visitorId} | Total: ${stats.totalVisits} | Online: ${onlineCount}`);
+
+    res.json({
+      totalVisits: stats.totalVisits,
+      onlineUsers: Math.max(1, onlineCount) // Toujours au moins 1 si l'utilisateur actuel est là
+    });
+  } catch (err) {
+    console.error("Stats Error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 app.use((req, res) => res.status(404).json({ message: 'Route non trouvée' }));
 app.use((err, req, res, next) => {

@@ -13,7 +13,7 @@ export default function Footer() {
           background: white;
           border-top: 1px solid #e2e8f0;
           padding: 25px 20px;
-          margin-top: 80px;
+          margin-top: 10px;
         }
 
         .footer-content {

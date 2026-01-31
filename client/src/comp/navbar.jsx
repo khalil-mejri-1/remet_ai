@@ -568,13 +568,13 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       {showAuthAlert && (
         <div className="rm-overlay" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>
           <div className="rm-modal-container rm-modal-small" onClick={(e) => e.stopPropagation()}>
-            <div className="rm-modal-body" style={{ padding: '2.5rem' }}>
+            <div className="rm-modal-body auth-alert-body">
               <button className="rm-close-btn" onClick={() => { setShowAuthAlert(false); unlockScroll(); }}>×</button>
 
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+              <div className="auth-alert-icon">🔒</div>
 
-              <h2 style={{ marginBottom: '0.75rem', color: '#0f172a' }}>Login Required</h2>
-              <p style={{ marginBottom: '2rem', color: '#64748b', lineHeight: '1.5' }}>
+              <h2 className="auth-alert-title">Login Required</h2>
+              <p className="auth-alert-text">
                 To register for RemetAI, you must first log in or create an account.
               </p>
 
@@ -595,26 +595,16 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
       {/* --- NEW MODALE 5 : ALREADY REGISTERED (SUCCESS) POPUP --- */}
       {showSuccessAlert && (
         <div className="rm-overlay" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>
-          <div className="rm-modal-container" style={{ maxWidth: '420px', borderRadius: '24px', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
-            <div className="rm-modal-body" style={{ padding: '3rem 2.5rem', textAlign: 'center' }}>
+          <div className="rm-modal-container rm-modal-small success-alert-container" onClick={(e) => e.stopPropagation()}>
+            <div className="rm-modal-body success-alert-body">
               <button className="rm-close-btn" onClick={() => { setShowSuccessAlert(false); unlockScroll(); }}>×</button>
 
-              <div style={{
-                width: '80px',
-                height: '80px',
-                background: 'rgba(34, 197, 94, 0.1)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1.5rem',
-                color: '#22c55e'
-              }}>
+              <div className="success-alert-icon-box">
                 <FiCheckCircle size={40} />
               </div>
 
-              <h2 style={{ marginBottom: '1rem', color: '#0f172a', fontSize: '1.75rem', fontWeight: '800' }}>Registration Confirmed</h2>
-              <p style={{ marginBottom: '2.5rem', color: '#64748b', lineHeight: '1.6', fontSize: '1rem' }}>
+              <h2 className="success-alert-title">Registration Confirmed</h2>
+              <p className="success-alert-text">
                 You are already a participant of the <strong style={{ color: '#0f172a' }}>REMET-AI</strong> workshop.<br />
                 We can't wait to see you there!
               </p>
@@ -732,8 +722,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                   <div className="lo-form-side">
                     <div className="lo-header">
                       <div className="lo-logo-mark">AI</div>
-                      <h1 className="lo-title">Sign In</h1>
-                      <p className="lo-subtitle">Access your account.</p>
+                      <p className="lo-subtitle">Access your account</p>
                     </div>
 
                     <form onSubmit={handleLoginSubmit} className="lo-form">
@@ -777,8 +766,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                 {authMode === 'register' ? (
                   <div className="re-form-side">
                     <div className="re-header">
-                      <h1 className="re-title">Create an Account</h1>
-                      <p className="re-subtitle">Join the community.</p>
+                      <p className="re-subtitle">Join the community !</p>
                     </div>
 
                     <form className="re-form" onSubmit={handleRegisterSubmit}>

@@ -6,6 +6,7 @@ import Programme from '../comp/programme.jsx';
 import Footer from '../comp/Footer.jsx';
 import About from '../comp/about.jsx';
 import KEY_SESSIONS from '../comp/KEY_SESSIONS.jsx';
+import VisitCounter from '../comp/VisitCounter.jsx';
 
 export default function Home() {
   // --- States ---
@@ -57,6 +58,7 @@ export default function Home() {
       <section id="speakers"><Speakers /></section>
       <section id="key-sessions"><KEY_SESSIONS /></section>
       <section id="program"><Programme /></section>
+      <VisitCounter />
       <Footer />
 
 
