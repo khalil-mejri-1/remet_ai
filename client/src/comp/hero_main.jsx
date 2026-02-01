@@ -42,7 +42,7 @@ export default function Hero_main({ onRegisterClick }) {
                     <div className="hero-phrase-card">
                         <h3 className="hero-fullname">
                             <span className="acronym-highlight">RE</span>search{" "}
-                            <span className="acronym-highlight">MET</span>hodologies in{" "}
+                            <span className="acronym-highlight">MET</span>hodologies on{" "}
                             <span className="acronym-highlight">A</span>rtificial{" "}
                             <span className="acronym-highlight">I</span>ntelligence
                         </h3>
