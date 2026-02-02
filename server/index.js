@@ -54,7 +54,7 @@ app.use(express.json());
    Config
 ----------------------- */
 const MONGO_URI = process.env.MONGO_URI;
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 if (!MONGO_URI) {
   console.error('ERREUR: MONGO_URI manquant dans .env');

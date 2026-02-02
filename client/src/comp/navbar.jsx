@@ -195,7 +195,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           setIsLoggedIn(true);
           setAuthMode(null);
           setShowSuccessAlert(true);
-          setTimeout(() => setShowSuccessAlert(false), 3000);
+          setTimeout(() => setShowSuccessAlert(false), 3001);
 
           if (onAuthUpdate) onAuthUpdate();
         }
