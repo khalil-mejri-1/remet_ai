@@ -18,8 +18,23 @@ const Attendance = require('./models/Attendance');
 const Program = require('./models/Program');
 const Stats = require('./models/Stats'); // Add Stats model
 const OnlineVisitor = require('./models/OnlineVisitor'); // Add OnlineVisitor model
+const Setting = require('./models/Setting'); // [NEW] Setting Model
+const Resource = require('./models/Resource'); // [NEW] Resource Model
+const multer = require('multer'); // [NEW] For file uploads
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
+
+// --- Multer Config (Memory Storage for MongoDB) ---
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 16 * 1024 * 1024 } // Limit to 16MB (MongoDB Document limit)
+});
+
+// Serve Uploads Static Folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // تعديل CORS للعمل مع أي frontend
 app.use(cors({
@@ -276,39 +291,98 @@ app.post('/api/attendance/scan', async (req, res) => {
       scanTime: new Date()
     };
 
+    // 4. Robust Update Logic
+    // Using atomic operations to handle concurrency
+
     if (type === 'entry') {
-      updateData.checkInTime = new Date();
-    } else if (type === 'exit') {
-      updateData.checkOutTime = new Date();
+      // Pour entry, on essaie de Créer un nouvel enregistrement.
+      // L'index unique (userId + sessionId) empêchera les doublons (Race Condition safe).
+      try {
+        const newAttendance = new Attendance({
+          userId: new mongoose.Types.ObjectId(userId),
+          sessionId: String(sessionId),
+          nameSession: session.title,
+          timeSession: session.time,
+          fullName,
+          email,
+          class: userClass,
+          phone: userPhone,
+          checkInTime: new Date(),
+          checkOutTime: null,
+          scanTime: new Date()
+        });
+
+        await newAttendance.save();
+
+        return res.json({
+          success: true,
+          message: 'Check-in successful! ✅',
+          data: newAttendance
+        });
+
+      } catch (saveError) {
+        // Erreur 11000 = Doublon (Déjà check-in)
+        if (saveError.code === 11000) {
+          return res.json({
+            success: false,
+            message: '⚠️ You have already checked in.'
+          });
+        }
+        throw saveError; // Autres erreurs
+      }
     }
 
-    // 4. Update or Create Attendance record
-    // Using explicit casting to ensure index match
-    const attendance = await Attendance.findOneAndUpdate(
-      {
-        userId: new mongoose.Types.ObjectId(userId),
-        sessionId: String(sessionId)
-      },
-      { $set: updateData },
-      { new: true, upsert: true, runValidators: true }
-    );
+    if (type === 'exit') {
+      // Pour exit, on ne met à jour QUE si:
+      // 1. L'enregistrement existe (userId + sessionId)
+      // 2. checkOutTime est NULL (pas encore sorti)
+      const result = await Attendance.updateOne(
+        {
+          userId: new mongoose.Types.ObjectId(userId),
+          sessionId: String(sessionId),
+          checkOutTime: null
+        },
+        {
+          $set: {
+            checkOutTime: new Date(),
+            scanTime: new Date() // Update last scan time
+          }
+        }
+      );
 
-    let message = 'Presence updated successfully!';
-    if (type === 'entry') message = 'Check-in successful! ✅';
-    if (type === 'exit') message = 'Check-out successful! ✅';
+      if (result.modifiedCount > 0) {
+        return res.json({
+          success: true,
+          message: 'Check-out successful! ✅'
+        });
+      } else {
+        // Si aucune modification, ca veut dire soit:
+        // - Pas de check-in trouvé
+        // - Déjà check-out
+        const existing = await Attendance.findOne({
+          userId: new mongoose.Types.ObjectId(userId),
+          sessionId: String(sessionId)
+        });
 
-    res.json({
-      success: true,
-      message,
-      data: attendance
-    });
+        if (!existing) {
+          return res.json({
+            success: false,
+            message: '❌ You must Check-in first.'
+          });
+        } else {
+          return res.json({
+            success: false,
+            message: '⚠️ You have already checked out.'
+          });
+        }
+      }
+    }
 
   } catch (err) {
     console.error("Scan Error:", err);
     res.status(500).json({ message: 'Erreur serveur', error: err.message });
   }
 });
-
 
 app.get('/api/attendance', async (req, res) => {
   try {
@@ -954,7 +1028,151 @@ app.get('/api/stats/visit', async (req, res) => {
   }
 });
 
+
+
+/* -----------------------
+   Resources API
+----------------------- */
+
+// GET All Resources
+app.get('/api/resources', async (req, res) => {
+  try {
+    const resources = await Resource.find({ visible: true }).sort({ createdAt: -1 });
+    res.json(resources);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST New Resource (Admin mostly, but backend allows if auth checked on frontend or here)
+// Supports 'link' or 'file'. If file, uses multer 'file' field.
+app.post('/api/resources', upload.single('file'), async (req, res) => {
+  try {
+    const { title, description, type, url } = req.body;
+
+    // Validate basics
+    if (!title || !type) {
+      return res.status(400).json({ message: "Title and Type are required." });
+    }
+
+    let resourceData = {
+      title,
+      description,
+      type,
+      visible: true
+    };
+
+    if (type === 'file') {
+      if (!req.file) {
+        return res.status(400).json({ message: "File is required for type 'file'." });
+      }
+      // Store file in DB
+      resourceData.fileData = req.file.buffer;
+      resourceData.contentType = req.file.mimetype;
+      resourceData.originalName = req.file.originalname;
+      resourceData.url = 'db-stored'; // Placeholder, not used for download logic anymore
+    } else {
+      // Link
+      if (!url) {
+        return res.status(400).json({ message: "URL is required for type 'link'." });
+      }
+      resourceData.url = url;
+    }
+
+    const newResource = new Resource(resourceData);
+    await newResource.save();
+
+    // Don't send back the heavy fileData
+    const responseObj = newResource.toObject();
+    delete responseObj.fileData;
+
+    res.status(201).json(responseObj);
+
+  } catch (err) {
+    console.error("Resource Add Error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET Resource File Content
+app.get('/api/resources/file/:id', async (req, res) => {
+  try {
+    const resource = await Resource.findById(req.params.id);
+    if (!resource || !resource.fileData) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    res.set('Content-Type', resource.contentType);
+    res.set('Content-Disposition', `attachment; filename="${resource.originalName}"`);
+    // [OPTIMIZATION] Cache file for 1 day to reduce DB load on high traffic
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(resource.fileData);
+
+  } catch (err) {
+    console.error("Download Error:", err);
+    res.status(500).json({ message: "Error downloading file" });
+  }
+});
+
+// DELETE Resource
+app.delete('/api/resources/:id', async (req, res) => {
+  try {
+    const resource = await Resource.findById(req.params.id);
+    if (!resource) return res.status(404).json({ message: "Resource not found" });
+
+    // If it's a file, try to delete it from disk
+    if (resource.type === 'file' && resource.url.startsWith('/uploads/')) {
+      const relativePath = resource.url.substring(1); // remove leading /
+      const filePath = path.join(__dirname, relativePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    await Resource.findByIdAndDelete(req.params.id);
+    res.json({ message: "Resource deleted successfully" });
+  } catch (err) {
+    console.error("Resource Delete Error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/* -----------------------
+   Settings API
+----------------------- */
+
+// Get Setting by Key
+app.get('/api/settings/:key', async (req, res) => {
+  try {
+    const setting = await Setting.findOne({ key: req.params.key });
+    // Default to strict true (open) if not found
+    const value = setting ? setting.value : true;
+    res.json({ value });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Update Setting
+app.post('/api/settings', async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    const setting = await Setting.findOneAndUpdate(
+      { key },
+      { value },
+      { upsert: true, new: true }
+    );
+    res.json(setting);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+
+// 404 Handler (Must be after all routes)
 app.use((req, res) => res.status(404).json({ message: 'Route non trouvée' }));
+
 app.use((err, req, res, next) => {
   console.error('Unhandled error', err);
   res.status(500).json({ message: 'Erreur interne', error: err.message });

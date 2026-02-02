@@ -64,6 +64,11 @@ export default function WorkshopRegistrations() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Toggle State
+    const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+    const [isToggling, setIsToggling] = useState(false);
+
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
     const isUserLoggedIn = localStorage.getItem('login') === 'true';
@@ -101,11 +106,40 @@ export default function WorkshopRegistrations() {
         }
     };
 
+    // Fetch Registration Status
+    const fetchRegistrationStatus = async () => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/settings/workshop_registration`);
+            setIsRegistrationOpen(response.data.value);
+        } catch (err) {
+            console.error("Error fetching setting:", err);
+        }
+    };
+
+    // Toggle Handler
+    const handleToggleRegistration = async () => {
+        setIsToggling(true);
+        try {
+            const newValue = !isRegistrationOpen;
+            await axios.post(`${API_BASE_URL}/api/settings`, {
+                key: 'workshop_registration',
+                value: newValue
+            });
+            setIsRegistrationOpen(newValue);
+        } catch (err) {
+            console.error("Error updating setting:", err);
+            alert("Failed to update status");
+        } finally {
+            setIsToggling(false);
+        }
+    };
+
     useEffect(() => {
         if (!isUserLoggedIn) {
             navigate('/');
         } else {
             fetchRegistrations();
+            fetchRegistrationStatus();
         }
     }, [isUserLoggedIn, currentPage]);
 
@@ -191,7 +225,7 @@ export default function WorkshopRegistrations() {
 
             <main className="dashboard-content" style={{ position: 'relative', zIndex: 1, padding: '2rem' }}>
                 {/* --- Quick Stats Overview --- */}
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -217,6 +251,39 @@ export default function WorkshopRegistrations() {
                             <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Total Registred:</span>
                             <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0f172a' }}>{totalRecords}</span>
                         </div>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'white', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#475569' }}>
+                            Registration Status: <span style={{ color: isRegistrationOpen ? '#10b981' : '#ef4444' }}>{isRegistrationOpen ? 'OPEN' : 'CLOSED'}</span>
+                        </span>
+                        <button
+                            onClick={handleToggleRegistration}
+                            disabled={isToggling}
+                            style={{
+                                position: 'relative',
+                                width: '48px',
+                                height: '26px',
+                                borderRadius: '100px',
+                                background: isRegistrationOpen ? '#10b981' : '#cbd5e1',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'background 0.3s'
+                            }}
+                        >
+                            <span style={{
+                                position: 'absolute',
+                                top: '3px',
+                                left: isRegistrationOpen ? '25px' : '3px',
+                                width: '20px',
+                                height: '20px',
+                                background: 'white',
+                                borderRadius: '50%',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                transition: 'left 0.3s'
+                            }} />
+                        </button>
                     </div>
                 </div>
 

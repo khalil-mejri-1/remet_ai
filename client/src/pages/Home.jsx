@@ -24,11 +24,13 @@ export default function Home() {
   const openWorkshop = () => { setShowWorkshopModal(true); lockScroll(); };
   const closeWorkshop = () => { setShowWorkshopModal(false); unlockScroll(); };
 
+  // 🌟 Registration Status 🌟
+  const [isRegistrationClosed, setIsRegistrationClosed] = useState(false);
+
   // --- Auth Check ---
   const checkAuthStatus = () => {
     const isLogin = localStorage.getItem('login') === 'true';
     const isWorkshop = localStorage.getItem('WORKSHOP') === 'true';
-
 
     if (isLogin && isWorkshop) {
       setShowPresenceBtn(true);
@@ -39,6 +41,24 @@ export default function Home() {
 
   useEffect(() => {
     checkAuthStatus();
+
+    // Fetch Registration Settings
+    const fetchSettings = async () => {
+      try {
+        const API_BASE_URL = 'http://localhost:3000'; // Or import from config
+        const response = await fetch(`${API_BASE_URL}/api/settings/workshop_registration`);
+        const data = await response.json();
+        // Check if value is FALSE (meaning disabled)
+        if (data.value === false) {
+          setIsRegistrationClosed(true);
+        } else {
+          setIsRegistrationClosed(false);
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      }
+    };
+    fetchSettings();
   }, []);
 
 
@@ -50,9 +70,13 @@ export default function Home() {
         onOpenWorkshop={openWorkshop}
         onCloseWorkshop={closeWorkshop}
         onAuthUpdate={checkAuthStatus}
+        isRegistrationClosed={isRegistrationClosed}
       />
 
-      <Hero_main onRegisterClick={openWorkshop} />
+      <Hero_main
+        onRegisterClick={openWorkshop}
+        isRegistrationClosed={isRegistrationClosed}
+      />
 
       <section id="about"><About /></section>
       <section id="speakers"><Speakers /></section>

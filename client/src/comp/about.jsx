@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import RevealOnScroll from './RevealOnScroll';
 
 // Configuration API URL (Make sure your Node server is running on port 5000)
 // Nous allons ajouter un endpoint pour vérifier le rôle de l'utilisateur par email.
@@ -297,18 +298,24 @@ const About = () => {
       <section className="ab-hero-section">
         <div className="ab-hero-blob"></div>
         <div className="ab-hero-content">
-          <span className="ab-badge">The Future starts Here</span>
-          <h1 className="ab-hero-title">
-            Driving <span className="ab-text-gradient">Intelligence</span><br />
-            Beyond Boundaries
-          </h1>
-          <p className="ab-hero-desc">
-            We bridge the gap between cutting-edge research and real-world application,
-            cultivating a ecosystem where human expertise meets artificial potential.
-          </p>
+          <RevealOnScroll>
+            <span className="ab-badge">The Future starts Here</span>
+          </RevealOnScroll>
+          <RevealOnScroll delay={200}>
+            <h1 className="ab-hero-title">
+              Driving <span className="ab-text-gradient">Intelligence</span><br />
+              Beyond Boundaries
+            </h1>
+          </RevealOnScroll>
+          <RevealOnScroll delay={400}>
+            <p className="ab-hero-desc">
+              We bridge the gap between cutting-edge research and real-world application,
+              cultivating a ecosystem where human expertise meets artificial potential.
+            </p>
+          </RevealOnScroll>
         </div>
 
-        <div className="ab-hero-visual">
+        <RevealOnScroll delay={600} className="ab-hero-visual">
           <div className="ab-photo-frame">
             <div className="ab-rotating-ring"></div>
             <div className="ab-corner-bracket top-l"></div>
@@ -332,14 +339,16 @@ const About = () => {
               )}
             </div>
           </div>
-        </div>
+        </RevealOnScroll>
       </section>
 
       {/* Team Section */}
       <section className="ab-team-section">
         <div className="ab-team-header-wrapper">
-          <h2 className="ab-section-title">The Architects of the Future</h2>
-          <p className="ab-section-subtitle">A multidisciplinary expertise for complex challenges.</p>
+          <RevealOnScroll>
+            <h2 className="ab-section-title">The Architects of the Future</h2>
+            <p className="ab-section-subtitle">A multidisciplinary expertise for complex challenges.</p>
+          </RevealOnScroll>
 
           {/* AFFICHAGE CONDITIONNEL POUR Add Team Member */}
           {isAdmin && (
@@ -351,38 +360,40 @@ const About = () => {
         </div>
 
         <div className="ab-team-grid">
-          {teamMembers.map(member => (
-            <div key={member._id} className="ab-team-card-modern">
-              <div className="ab-card-glow"></div>
-              <div className="ab-member-info">
-                <h3 className="ab-member-name-modern">{member.name}</h3>
-                <div className="ab-role-badge">
-                  {member.role}
+          {teamMembers.map((member, index) => (
+            <RevealOnScroll key={member._id} delay={index * 100}>
+              <div key={member._id} className="ab-team-card-modern">
+                <div className="ab-card-glow"></div>
+                <div className="ab-member-info">
+                  <h3 className="ab-member-name-modern">{member.name}</h3>
+                  <div className="ab-role-badge">
+                    {member.role}
+                  </div>
                 </div>
-              </div>
 
-              <div className="ab-social-dots">
-                <span></span><span></span><span></span>
-              </div>
-
-              {/* AFFICHAGE CONDITIONNEL POUR Update et Delete */}
-              {isAdmin && (
-                <div className="ab-card-actions">
-                  <button
-                    className="ab-action-btn update"
-                    onClick={() => handleUpdateClick(member)}
-                  >
-                    <EditIcon /> Update
-                  </button>
-                  <button
-                    className="ab-action-btn delete"
-                    onClick={() => handleDeleteMember(member._id)}
-                  >
-                    <TrashIcon /> Delete
-                  </button>
+                <div className="ab-social-dots">
+                  <span></span><span></span><span></span>
                 </div>
-              )}
-            </div>
+
+                {/* AFFICHAGE CONDITIONNEL POUR Update et Delete */}
+                {isAdmin && (
+                  <div className="ab-card-actions">
+                    <button
+                      className="ab-action-btn update"
+                      onClick={() => handleUpdateClick(member)}
+                    >
+                      <EditIcon /> Update
+                    </button>
+                    <button
+                      className="ab-action-btn delete"
+                      onClick={() => handleDeleteMember(member._id)}
+                    >
+                      <TrashIcon /> Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            </RevealOnScroll>
           ))}
         </div>
       </section>
