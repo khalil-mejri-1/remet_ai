@@ -4,6 +4,7 @@ import Home from "./pages/Home.jsx";
 import PresenceManagement from "./comp/PresenceManagement.jsx";
 import Gestion_compte from "./comp/Gestioncompte.jsx";
 import WorkshopRegistrations from "./comp/WorkshopRegistrations.jsx";
+import Resources from "./comp/Resources.jsx";
 
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
           <Route path="/presence" element={<PresenceManagement />} />
           <Route path="/users" element={<Gestion_compte />} />
           <Route path="/workshop-registrations" element={<WorkshopRegistrations />} />
+          <Route path="/resources" element={<Resources />} />
           <Route path="/*" element={<Home />} />
         </Routes>
       </BrowserRouter>

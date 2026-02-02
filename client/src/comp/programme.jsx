@@ -4,6 +4,7 @@ import QRScannerModal from '../comp/QRScannerModal.jsx';
 import EntryExitModal from '../comp/EntryExitModal.jsx';
 import AuthRequiredModal from '../comp/AuthRequiredModal.jsx';
 import API_BASE_URL from '../config';
+import RevealOnScroll from './RevealOnScroll';
 
 // --- ICONS (Minimalist Tech Style) ---
 const PlusIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
@@ -277,35 +278,38 @@ export default function Programme() {
 
       <div className="prog-main-container">
         {/* HEADER SECTION */}
-        <header className="prog-header">
-          <div className="prog-title-group">
-            <span className="prog-badge">REMET-AI</span>
-            <h1 className="prog-main-title">Workshop's Program</h1>
-            <p className="prog-desc">Discover the sessions, workshops, and conferences..</p>
-          </div>
-
-          {isAdmin && (
-            <div className="prog-admin-actions">
-              <button className="prog-btn-secondary" onClick={() => setActiveModal('addDay')}>
-                <PlusIcon /> Day
-              </button>
-              <button className="prog-btn-primary" onClick={() => setActiveModal('addSession')}>
-                <PlusIcon /> Session
-              </button>
-              <button className="prog-btn-secondary" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }} onClick={() => setActiveModal('removeDay')}>
-                <TrashIcon /> Delete Day
-              </button>
-              <button className="prog-btn-secondary" style={{ backgroundColor: '#dcfce7', color: '#16a34a', borderColor: '#16a34a' }} onClick={handleExportPDF}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Export PDF
-              </button>
+        {/* HEADER SECTION */}
+        <RevealOnScroll>
+          <header className="prog-header">
+            <div className="prog-title-group">
+              <span className="prog-badge">REMET-AI</span>
+              <h1 className="prog-main-title">Workshop's Program</h1>
+              <p className="prog-desc">Discover the sessions, workshops, and conferences..</p>
             </div>
-          )}
-        </header>
+
+            {isAdmin && (
+              <div className="prog-admin-actions">
+                <button className="prog-btn-secondary" onClick={() => setActiveModal('addDay')}>
+                  <PlusIcon /> Day
+                </button>
+                <button className="prog-btn-primary" onClick={() => setActiveModal('addSession')}>
+                  <PlusIcon /> Session
+                </button>
+                <button className="prog-btn-secondary" style={{ backgroundColor: '#fee2e2', color: '#dc2626' }} onClick={() => setActiveModal('removeDay')}>
+                  <TrashIcon /> Delete Day
+                </button>
+                <button className="prog-btn-secondary" style={{ backgroundColor: '#dcfce7', color: '#16a34a', borderColor: '#16a34a' }} onClick={handleExportPDF}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Export PDF
+                </button>
+              </div>
+            )}
+          </header>
+        </RevealOnScroll>
 
         {/* DAY SELECTOR */}
         <nav className="prog-tabs">
@@ -325,43 +329,45 @@ export default function Programme() {
           {isLoading ? (
             <div className="prog-loading">Chargement du programme...</div>
           ) : programmeData.length > 0 ? (
-            programmeData.map((item) => (
-              <div key={item.id} className="prog-card">
-                <div className="prog-card-time">
-                  <span className="time-badge">{item.time}</span>
-                  <div className="time-line"></div>
-                </div>
+            programmeData.map((item, index) => (
+              <RevealOnScroll key={item.id} delay={index * 100}>
+                <div className="prog-card">
+                  <div className="prog-card-time">
+                    <span className="time-badge">{item.time}</span>
+                    <div className="time-line"></div>
+                  </div>
 
-                <div className="prog-card-main">
-                  <div className="prog-card-top">
-                    <span className="prog-type-label">{item.type}</span>
-                    {isAdmin && (
-                      <div className="prog-admin-tools">
-                        <button className="tool-btn" onClick={() => { setCurrentItem(item); setActiveModal('editSession'); }}><EditIcon /></button>
-                        <button className="tool-btn danger" onClick={() => handleDeleteItem(item.id)}><TrashIcon /></button>
+                  <div className="prog-card-main">
+                    <div className="prog-card-top">
+                      <span className="prog-type-label">{item.type}</span>
+                      {isAdmin && (
+                        <div className="prog-admin-tools">
+                          <button className="tool-btn" onClick={() => { setCurrentItem(item); setActiveModal('editSession'); }}><EditIcon /></button>
+                          <button className="tool-btn danger" onClick={() => handleDeleteItem(item.id)}><TrashIcon /></button>
+                        </div>
+                      )}
+                    </div>
+
+                    <h3 className="prog-session-title">{item.title}</h3>
+                    {item.ledBy && <p className="prog-session-lead">Led by : <strong>{item.ledBy}</strong></p>}
+
+                    {item.attendanceEnabled && (
+                      <div className="prog-card-footer">
+                        {showPresenceBtn && (
+                          <button className="prog-scan-btn" onClick={() => openScanner(item)}>
+                            <QRIcon /> Scan QR
+                          </button>
+                        )}
+                        {isAdmin && (
+                          <button className="prog-qr-btn" onClick={() => handleOpenQRSelect(item)}>
+                            <QRIcon /> Manage QR
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
-
-                  <h3 className="prog-session-title">{item.title}</h3>
-                  {item.ledBy && <p className="prog-session-lead">Led by : <strong>{item.ledBy}</strong></p>}
-
-                  {item.attendanceEnabled && (
-                    <div className="prog-card-footer">
-                      {showPresenceBtn && (
-                        <button className="prog-scan-btn" onClick={() => openScanner(item)}>
-                          <QRIcon /> Scan QR
-                        </button>
-                      )}
-                      {isAdmin && (
-                        <button className="prog-qr-btn" onClick={() => handleOpenQRSelect(item)}>
-                          <QRIcon /> Manage QR
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
-              </div>
+              </RevealOnScroll>
             ))
           ) : (
             <div className="prog-empty">No session scheduled for today.</div>

@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect } from "firebase/auth"; // 1. استيراد Redirect
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth"; // 1. استيراد Redirect
 
 const firebaseConfig = {
   // ... (نفس إعداداتك السابقة لا تغيرها)
@@ -23,4 +23,4 @@ export const loginWithGoogle = async () => {
 };
 
 // نحتاج تصدير auth لنستخدمه في Navbar لاستقبال النتيجة
-export { auth };
+export { auth, getRedirectResult };

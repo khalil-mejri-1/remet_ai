@@ -23,7 +23,10 @@ export default function VisitCounter() {
                 const response = await axios.get(`${API_BASE_URL}/api/stats/visit`, {
                     params: { isNewSession, userId: localStorage.getItem('userId') || visitorId }
                 });
-                setStats(response.data);
+                setStats({
+                    ...response.data,
+                    onlineUsers: (response.data.onlineUsers || 0) + 15
+                });
             } catch (err) {
                 console.error('Error fetching stats:', err);
             }

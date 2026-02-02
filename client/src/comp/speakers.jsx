@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import API_BASE_URL from '../config';
+import RevealOnScroll from './RevealOnScroll';
 
 // --- ICONS (Optimisés) ---
 const PlusIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
@@ -104,21 +105,23 @@ export default function Speakers() {
     return (
         <section className="ai-section">
             <div className="ai-container">
-                <div className="ai-header">
-                    <div className="title-stack">
-                        <span className="ai-subtitle">Visionary Minds</span>
-                        <h2 className="ai-main-title">Shaping the Future of <span className="text-gradient">Intelligence</span></h2>
-                    </div>
+                <RevealOnScroll>
+                    <div className="ai-header">
+                        <div className="title-stack">
+                            <span className="ai-subtitle">Visionary Minds</span>
+                            <h2 className="ai-main-title">Shaping the Future of <span className="text-gradient">Intelligence</span></h2>
+                        </div>
 
-                    {isAdmin && (
-                        <button className="ai-btn-primary" onClick={() => {
-                            setCurrentSpeaker({ name: "", title: "", description: "", expertType: "ia" });
-                            setIsModalOpen(true);
-                        }}>
-                            <PlusIcon /> <span>Add Expert</span>
-                        </button>
-                    )}
-                </div>
+                        {isAdmin && (
+                            <button className="ai-btn-primary" onClick={() => {
+                                setCurrentSpeaker({ name: "", title: "", description: "", expertType: "ia" });
+                                setIsModalOpen(true);
+                            }}>
+                                <PlusIcon /> <span>Add Expert</span>
+                            </button>
+                        )}
+                    </div>
+                </RevealOnScroll>
 
                 <div className="ai-grid">
                     {isLoading ? (
@@ -126,17 +129,19 @@ export default function Speakers() {
                     ) : speakers.length === 0 ? (
                         <p className="empty-state">No speakers found in the database.</p>
                     ) : (
-                        speakers.map(s => (
-                            <SpeakerCard
-                                key={s._id}
-                                speaker={s}
-                                isAdmin={isAdmin}
-                                onDelete={handleDelete}
-                                onUpdate={(speaker) => {
-                                    setCurrentSpeaker(speaker);
-                                    setIsModalOpen(true);
-                                }}
-                            />
+                        speakers.map((s, index) => (
+                            <RevealOnScroll key={s._id} delay={index * 100}>
+                                <SpeakerCard
+                                    key={s._id}
+                                    speaker={s}
+                                    isAdmin={isAdmin}
+                                    onDelete={handleDelete}
+                                    onUpdate={(speaker) => {
+                                        setCurrentSpeaker(speaker);
+                                        setIsModalOpen(true);
+                                    }}
+                                />
+                            </RevealOnScroll>
                         ))
                     )}
                 </div>

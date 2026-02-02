@@ -1,21 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-const RevealOnScroll = ({ children, threshold = 0.1 }) => {
+const RevealOnScroll = ({ children, threshold = 0.1, delay = 0, className = "" }) => {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // عندما يظهر العنصر بنسبة معينة على الشاشة
         if (entry.isIntersecting) {
           setIsVisible(true);
-          observer.unobserve(ref.current); // إيقاف المراقبة بعد الظهور الأول لتحسين الأداء
+          observer.unobserve(entry.target);
         }
       },
       {
-        threshold: threshold, // نسبة الظهور المطلوبة (0.1 = 10%)
-        rootMargin: "0px 0px -50px 0px" // هامش لتأخير الحركة قليلاً
+        threshold: threshold,
+        rootMargin: "0px 0px -50px 0px" // Trigger slightly before element is full in view
       }
     );
 
@@ -31,9 +30,10 @@ const RevealOnScroll = ({ children, threshold = 0.1 }) => {
   }, [threshold]);
 
   return (
-    <div 
-      ref={ref} 
-      className={`reveal-element ${isVisible ? 'active' : ''}`}
+    <div
+      ref={ref}
+      className={`reveal-item ${isVisible ? 'active' : ''} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
     </div>
