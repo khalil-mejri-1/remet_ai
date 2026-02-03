@@ -7,6 +7,7 @@ import Footer from '../comp/Footer.jsx';
 import About from '../comp/about.jsx';
 import KEY_SESSIONS from '../comp/KEY_SESSIONS.jsx';
 import VisitCounter from '../comp/VisitCounter.jsx';
+import API_BASE_URL from '../config'; // Import from config
 
 export default function Home() {
   // --- States ---
@@ -45,7 +46,6 @@ export default function Home() {
     // Fetch Registration Settings
     const fetchSettings = async () => {
       try {
-        const API_BASE_URL = 'http://localhost:3001'; // Or import from config
         const response = await fetch(`${API_BASE_URL}/api/settings/workshop_registration`);
         const data = await response.json();
         // Check if value is FALSE (meaning disabled)

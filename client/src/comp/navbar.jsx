@@ -301,6 +301,10 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
       } catch (error) {
         console.error("Google Login Error:", error);
+        if (error.response?.status === 403) {
+          setShowCapacityAlert(true);
+          lockScroll();
+        }
       }
     },
     onError: (error) => console.log('Login Failed:', error),
@@ -350,7 +354,13 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
     } catch (error) {
       console.error("Registration Error:", error);
-      alert(error.response?.data?.message || "Registration error");
+      if (error.response?.status === 403) {
+        setAuthMode(null);
+        setShowCapacityAlert(true);
+        lockScroll();
+      } else {
+        alert(error.response?.data?.message || "Registration error");
+      }
     }
   };
 
@@ -873,7 +883,15 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
                       <p className="lo-footer-text">
                         No account yet?
-                        <button onClick={() => setAuthMode('register')} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Create Account</button>
+                        <button onClick={() => {
+                          if (isRegistrationClosed) {
+                            setAuthMode(null);
+                            setShowCapacityAlert(true);
+                            lockScroll();
+                          } else {
+                            setAuthMode('register');
+                          }
+                        }} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Create Account</button>
                       </p>
                       <div className="lo-divider">
                         <span>Or continue with</span>
