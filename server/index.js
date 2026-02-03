@@ -92,6 +92,12 @@ app.get('/', (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   try {
+    // 🌟 Check if registration is CLOSED 🌟
+    const registrationSetting = await Setting.findOne({ key: 'workshop_registration' });
+    if (registrationSetting && registrationSetting.value === false) {
+      return res.status(403).json({ message: "Registration is currently closed. Maximum capacity reached." });
+    }
+
     const { fullName, email, password } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "User exists" });
@@ -127,7 +133,14 @@ app.post('/api/google-login', async (req, res) => {
   try {
     const { fullName, email } = req.body;
     let user = await User.findOne({ email });
+
     if (!user) {
+      // 🌟 Check if registration is CLOSED for NEW users 🌟
+      const registrationSetting = await Setting.findOne({ key: 'workshop_registration' });
+      if (registrationSetting && registrationSetting.value === false) {
+        return res.status(403).json({ message: "Registration is currently closed. Maximum capacity reached." });
+      }
+
       user = new User({ fullName, email, password: null });
       await user.save();
     }
