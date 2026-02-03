@@ -131,10 +131,14 @@ app.post('/api/login', async (req, res) => {
 
 app.post('/api/google-login', async (req, res) => {
   try {
-    const { fullName, email } = req.body;
+    const { fullName, email, allowCreate } = req.body;
     let user = await User.findOne({ email });
 
     if (!user) {
+      if (allowCreate === false) {
+        return res.status(404).json({ message: "Account not found. Please create an account first." });
+      }
+
       // 🌟 Check if registration is CLOSED for NEW users 🌟
       const registrationSetting = await Setting.findOne({ key: 'workshop_registration' });
       if (registrationSetting && registrationSetting.value === false) {
