@@ -12,6 +12,7 @@ const TrashIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="no
 const EditIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
 const QRIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M21 15h-3a2 2 0 0 0-2 2v3"></path><path d="M16 21v-2a2 2 0 0 0 2-2h3"></path></svg>;
 const XIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+const CheckIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
 
 export default function Programme() {
   // --- ÉTATS ---
@@ -20,6 +21,7 @@ export default function Programme() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showPresenceBtn, setShowPresenceBtn] = useState(false);
+  const [userAttendances, setUserAttendances] = useState([]);
 
   const [activeModal, setActiveModal] = useState(null);
   const [currentItem, setCurrentItem] = useState(null);
@@ -57,10 +59,22 @@ export default function Programme() {
     } catch (err) { setIsAdmin(false); }
   };
 
+  const fetchUserAttendances = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/attendance/user/${userId}`);
+      if (res.ok) {
+        const attendances = await res.json();
+        setUserAttendances(attendances);
+      }
+    } catch (err) { console.error("Attendance error:", err); }
+  };
+
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
-      await Promise.all([fetchData(), checkAdminStatus()]);
+      await Promise.all([fetchData(), checkAdminStatus(), fetchUserAttendances()]);
       const isLogin = localStorage.getItem('login') === 'true';
       const isWorkshop = localStorage.getItem('WORKSHOP') === 'true';
       setShowPresenceBtn(isLogin && isWorkshop);
@@ -231,6 +245,7 @@ export default function Programme() {
       });
 
       const result = await res.json();
+      if (res.ok) fetchUserAttendances(); // Refresh attendances after scan
       return { success: res.ok, message: result.message };
     } catch (err) {
       return { success: false, message: "Server connection error" };
@@ -340,11 +355,22 @@ export default function Programme() {
                   <div className="prog-card-main">
                     <div className="prog-card-top">
                       <span className="prog-type-label">{item.type}</span>
-                      {isAdmin && (
+                      {isAdmin ? (
                         <div className="prog-admin-tools">
+                          {userAttendances.some(att => Number(att.sessionId) === item.id) && (
+                            <div className="prog-attended-badge" title="Session Registered">
+                              <CheckIcon />
+                            </div>
+                          )}
                           <button className="tool-btn" onClick={() => { setCurrentItem(item); setActiveModal('editSession'); }}><EditIcon /></button>
                           <button className="tool-btn danger" onClick={() => handleDeleteItem(item.id)}><TrashIcon /></button>
                         </div>
+                      ) : (
+                        userAttendances.some(att => Number(att.sessionId) === item.id) && (
+                          <div className="prog-attended-badge" title="Session Registered">
+                            <CheckIcon />
+                          </div>
+                        )
                       )}
                     </div>
 
@@ -353,7 +379,7 @@ export default function Programme() {
 
                     {item.attendanceEnabled && (
                       <div className="prog-card-footer">
-                        {showPresenceBtn && (
+                        {showPresenceBtn && !userAttendances.some(att => Number(att.sessionId) === item.id) && (
                           <button className="prog-scan-btn" onClick={() => openScanner(item)}>
                             <QRIcon /> Scan QR
                           </button>
@@ -768,6 +794,24 @@ const cssStyles = `
     }
 
     .tool-btn.danger:hover { color: #ef4444; }
+
+    .prog-admin-tools {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .prog-attended-badge {
+        background: #ecfdf5;
+        color: #10b981;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(16, 185, 129, 0.1);
+    }
 
     /* Modal */
     .prog-overlay {
