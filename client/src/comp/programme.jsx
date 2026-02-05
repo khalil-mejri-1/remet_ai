@@ -379,7 +379,7 @@ export default function Programme() {
 
                     {item.attendanceEnabled && (
                       <div className="prog-card-footer">
-                        {showPresenceBtn && !userAttendances.some(att => Number(att.sessionId) === item.id) && (
+                        {showPresenceBtn && (
                           <button className="prog-scan-btn" onClick={() => openScanner(item)}>
                             <QRIcon /> Scan QR
                           </button>
