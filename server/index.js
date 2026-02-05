@@ -414,6 +414,20 @@ app.get('/api/attendance', async (req, res) => {
   }
 });
 
+app.get('/api/attendance/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'ID utilisateur invalide' });
+    }
+    const attendances = await Attendance.find({ userId: new mongoose.Types.ObjectId(userId) });
+    res.json(attendances);
+  } catch (error) {
+    console.error("Error fetching user attendance:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // PDF Export for Global Attendance
 app.get('/api/attendance/export-pdf', async (req, res) => {
   try {
