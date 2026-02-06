@@ -1,8 +1,11 @@
 import React from 'react';
+import { FaFacebook, FaInstagram, FaTiktok, FaYoutube } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import noron from "../img/noron.png";
 import RevealOnScroll from './RevealOnScroll';
 
 export default function Hero_main({ onRegisterClick, isRegistrationClosed }) {
+
 
     // Logic to handle the click
     const handleRegisterBtnClick = () => {
@@ -59,6 +62,32 @@ export default function Hero_main({ onRegisterClick, isRegistrationClosed }) {
                                 <span style={{ display: 'inline-block' }}><span className="acronym-highlight">I</span>ntelligence</span>
                             </h3>
                         </div>
+
+                        {/* Social Icons (Placed under the card) */}
+                        <div className="hero-social-links" style={{ marginTop: '-15px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                            <a href="https://www.facebook.com/profile.php?id=61576808901014" target="_blank" rel="noopener noreferrer" className="hero-social-icon fb"><FaFacebook /></a>
+                            <a href="https://www.instagram.com/remet_ai/" target="_blank" rel="noopener noreferrer" className="hero-social-icon insta"><FaInstagram /></a>
+                            <a href="https://www.tiktok.com/@remet_ai" target="_blank" rel="noopener noreferrer" className="hero-social-icon tiktok"><FaTiktok /></a>
+                            <a href="https://www.youtube.com/channel/UCTftGjGyHGhthNyA92PW88A" target="_blank" rel="noopener noreferrer" className="hero-social-icon yt"><FaYoutube /></a>
+                        </div>
+
+                        <style>{`
+                            .hero-social-icon {
+                                font-size: 1.5rem; /* Slightly larger for visibility outside card */
+                                color: #94a3b8;
+                                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+                            .hero-social-icon:hover {
+                                transform: translateY(-3px) scale(1.1);
+                            }
+                            .hero-social-icon.fb:hover { color: #1877F2; }
+                            .hero-social-icon.insta:hover { color: #E4405F; }
+                            .hero-social-icon.tiktok:hover { color: #000000; }
+                            .hero-social-icon.yt:hover { color: #FF0000; }
+                        `}</style>
                     </RevealOnScroll>
 
                     {/* Description */}
@@ -71,18 +100,114 @@ export default function Hero_main({ onRegisterClick, isRegistrationClosed }) {
                     {/* Action Buttons */}
                     <RevealOnScroll delay={800}>
                         <div className="hero-buttons">
-                            {/* Updated onClick to check registration & login status */}
-                            <button className="btn register-btn" onClick={handleRegisterBtnClick}>
-                                REGISTER NOW
-                            </button>
+                            {/* Button 1: Register -> PROGRAM */}
+                            <a href="#program" style={{ textDecoration: 'none' }}>
+                                <button className="btn btn-program-shine">
+                                    PROGRAM
+                                </button>
+                            </a>
 
-                            <button style={{ border: "none", backgroundColor: 'transparent' }}>
-                                <a href="#program" className="btn program-btn" style={{ textDecoration: "none" }}>PROGRAM</a>
-                            </button>
+                            {/* Button 2: Program -> LIVE STREAM */}
+                            <Link to="/live" style={{ textDecoration: 'none' }}>
+                                <button className="btn btn-live-stream">
+                                    LIVE STREAM
+                                </button>
+                            </Link>
                         </div>
+
+                        <style>{`
+                            .btn-program-shine {
+                                position: relative;
+                                background: white; /* Default White */
+                                color: #2563eb;    /* Workshop Blue (Approx) */
+                                border: 2px solid #2563eb;
+                                font-weight: 700;
+                                font-size: 0.95rem; /* Reduced Size */
+                                padding: 10px 24px; /* Reduced Size */
+                                overflow: hidden;
+                                z-index: 1;
+                                transition: all 0.3s ease;
+                            }
+                            
+                            .btn-program-shine:hover {
+                                background: linear-gradient(135deg, #2563eb 0%, #9333ea 100%); /* Workshop Gradient on Hover */
+                                color: white;
+                                border-color: transparent; /* Seamless gradient */
+                                transform: translateY(-2px);
+                                box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+                            }
+
+                            /* The Shine Wave */
+                            .btn-program-shine::after {
+                                content: '';
+                                position: absolute;
+                                top: 0;
+                                left: -150%;
+                                width: 100%;
+                                height: 100%;
+                                background: linear-gradient(
+                                    90deg, 
+                                    transparent, 
+                                    rgba(255, 255, 255, 0.6), 
+                                    transparent
+                                );
+                                transform: skewX(-20deg);
+                                transition: none;
+                            }
+
+                            .btn-program-shine:hover::after {
+                                animation: shine 0.75s;
+                            }
+
+                            @keyframes shine {
+                                100% {
+                                    left: 150%;
+                                }
+                            }
+
+                            .btn-live-stream {
+                                position: relative; /* Needed for pseudo-element */
+                                background-color: white;
+                                color: #ef4444;
+                                border: 2px solid #ef4444;
+                                font-weight: 700;
+                                font-size: 0.95rem; /* Reduced Size */
+                                padding: 10px 24px; /* Reduced Size */
+                                overflow: hidden; /* Needed for shine */
+                                transition: all 0.3s ease;
+                            }
+                            .btn-live-stream:hover {
+                                background-color: #ef4444;
+                                color: white;
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                            }
+                            
+                            /* Shine for Live Stream */
+                            .btn-live-stream::after {
+                                content: '';
+                                position: absolute;
+                                top: 0;
+                                left: -150%;
+                                width: 100%;
+                                height: 100%;
+                                background: linear-gradient(
+                                    90deg, 
+                                    transparent, 
+                                    rgba(255, 255, 255, 0.6), 
+                                    transparent
+                                );
+                                transform: skewX(-20deg);
+                                transition: none;
+                            }
+
+                            .btn-live-stream:hover::after {
+                                animation: shine 0.75s;
+                            }
+                        `}</style>
                     </RevealOnScroll>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
