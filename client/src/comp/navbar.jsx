@@ -3,9 +3,10 @@ import logo from "../img/logo.png";
 import { useGoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FiLogOut, FiLayout, FiUsers, FiCheckSquare, FiCheckCircle, FiLink, FiAlertCircle, FiXCircle } from "react-icons/fi";
+import { FiLogOut, FiLayout, FiUsers, FiCheckSquare, FiCheckCircle, FiLink } from "react-icons/fi";
 import { auth, getRedirectResult } from '../firebase'; // Import firebase auth
 import API_BASE_URL from '../config';
+import LiveStreamManagement from './LiveStreamManagement'; // Import Admin Component
 const ROLE_API_URL = `${API_BASE_URL}/api/user/role/`;
 
 export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop, onAuthUpdate, isRegistrationClosed }) {
@@ -16,6 +17,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const [showAuthAlert, setShowAuthAlert] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showLiveModal, setShowLiveModal] = useState(false); // 🌟 New Live Stream Admin Modal
   // 🌟 حالة جديدة لتأكيد تسجيل الخروج 🌟
   const [showPresenceModal, setShowPresenceModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -24,8 +26,6 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   // 🌟 Registration Capacity State (Now a Prop) 🌟
   // const [isRegistrationClosed, setIsRegistrationClosed] = useState(false); // REMOVED: Now passed as prop
   const [showCapacityAlert, setShowCapacityAlert] = useState(false);
-  const [showErrorAlert, setShowErrorAlert] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   // --- Auth State ---
   const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('login') === 'true');
@@ -53,14 +53,12 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
   const lockScroll = () => { document.body.style.overflow = 'hidden'; };
   const unlockScroll = () => { document.body.style.overflow = 'auto'; };
 
-  const openModal = () => {
-    if (isRegistrationClosed) return; // 🌟 Safety check
-    if (onOpenWorkshop) onOpenWorkshop();
-    setIsOpen(false);
-  };
+  const openModal = () => { if (onOpenWorkshop) onOpenWorkshop(); setIsOpen(false); };
   const closeModal = () => { if (onCloseWorkshop) onCloseWorkshop(); };
   const openAdminModal = () => { navigate('/users'); setIsOpen(false); };
   const openRegistrationsModal = () => { navigate('/workshop-registrations'); setIsOpen(false); };
+  const openLiveModal = () => { setShowLiveModal(true); setIsOpen(false); lockScroll(); }; // 🌟 New Function
+  const closeLiveModal = () => { setShowLiveModal(false); unlockScroll(); }; // 🌟 New Function
   const closeAdminModal = () => { setShowAdminModal(false); unlockScroll(); };
 
   // Update existing openers to ensure they close alerts if open
@@ -201,7 +199,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           setIsLoggedIn(true);
           setAuthMode(null);
           setShowSuccessAlert(true);
-          setTimeout(() => setShowSuccessAlert(false), 3001);
+          setTimeout(() => setShowSuccessAlert(false), 3000);
 
           if (onAuthUpdate) onAuthUpdate();
         }
@@ -264,66 +262,56 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
         try {
           const res = await axios.post(`${API_BASE_URL}/api/google-login`, {
             fullName: userData.name,
-            email: userData.email,
-            allowCreate: authMode === 'register' // 🌟 Flag to control account creation
+            email: userData.email
           });
-          token = res.data.token;
+
+          // Only proceed if backend success
           if (res.data.token) localStorage.setItem('token', res.data.token);
           if (res.data.userId) localStorage.setItem('userId', res.data.userId);
           if (res.data._id) localStorage.setItem('userId', res.data._id);
+
+          localStorage.setItem('userName', userData.name);
+          localStorage.setItem('userEmail', userData.email);
+          localStorage.setItem('login', 'true');
+
+          setIsLoggedIn(true);
+          if (onAuthUpdate) onAuthUpdate();
+
+          await checkUserRole(userData.email);
+
+          setWorkshopForm(prev => ({
+            ...prev,
+            fullname: userData.name,
+            email: userData.email
+          }));
+
+          closeModal_login();
+          closeModal_register();
+
+          setTimeout(() => {
+            axios.get(`${API_BASE_URL}/api/check-registration/${userData.email}`)
+              .then(res => {
+                if (!res.data.registered) {
+                  localStorage.removeItem('WORKSHOP');
+                  openModal();
+                } else {
+                  localStorage.setItem('WORKSHOP', 'true');
+                  window.location.reload(); // Refresh to ensure state sync
+                }
+              })
+              .catch(() => openModal());
+          }, 500);
+
         } catch (serverError) {
           console.error("Backend Google Sync Error:", serverError);
-          if (serverError.response?.status === 404) {
-            setErrorMessage("Account not found. Please create an account first.");
-            setShowErrorAlert(authMode !== 'login');
-            if (authMode === 'login') {
-              setTimeout(() => setErrorMessage(""), 5000);
-            } else {
-              lockScroll();
-            }
-            return;
+          // Check for 403 Capacity Error
+          if (serverError.response && serverError.response.status === 403) {
+            closeModal_login();
+            closeModal_register();
+            setShowCapacityAlert(true); // Show the alert
+            return; // STOP execution
           }
-          if (serverError.response?.status === 403) {
-            setShowCapacityAlert(true);
-            lockScroll();
-            return;
-          }
-          throw serverError;
         }
-
-        localStorage.setItem('userName', userData.name);
-        localStorage.setItem('userEmail', userData.email);
-        localStorage.setItem('login', 'true');
-
-        setIsLoggedIn(true);
-        if (onAuthUpdate) onAuthUpdate();
-
-        await checkUserRole(userData.email);
-
-        setWorkshopForm(prev => ({
-          ...prev,
-          fullname: userData.name,
-          email: userData.email
-        }));
-
-        closeModal_login();
-        closeModal_register();
-
-        setTimeout(() => {
-          axios.get(`${API_BASE_URL}/api/check-registration/${userData.email}`)
-            .then(res => {
-              if (!res.data.registered) {
-                localStorage.removeItem('WORKSHOP');
-                if (!isRegistrationClosed) openModal(); // 🌟 Don't open if CLOSED
-              } else {
-                localStorage.setItem('WORKSHOP', 'true');
-              }
-            })
-            .catch(() => {
-              if (!isRegistrationClosed) openModal(); // 🌟 Don't open if CLOSED
-            });
-        }, 500);
-
       } catch (error) {
         console.error("Google Login Error:", error);
       }
@@ -371,19 +359,11 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
       alert("Account created successfully!");
       localStorage.removeItem('WORKSHOP');
-      if (!isRegistrationClosed) {
-        setTimeout(() => { openModal(); }, 500);
-      }
+      setTimeout(() => { openModal(); }, 500);
 
     } catch (error) {
       console.error("Registration Error:", error);
-      if (error.response?.status === 403) {
-        setAuthMode(null);
-        setShowCapacityAlert(true);
-        lockScroll();
-      } else {
-        alert(error.response?.data?.message || "Registration error");
-      }
+      alert(error.response?.data?.message || "Registration error");
     }
   };
 
@@ -424,20 +404,17 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           .then(apiRes => {
             if (!apiRes.data.registered) {
               localStorage.removeItem('WORKSHOP');
-              if (!isRegistrationClosed) openModal(); // 🌟 Don't open if CLOSED
+              openModal();
             } else {
               localStorage.setItem('WORKSHOP', 'true');
             }
           })
-          .catch(() => {
-            if (!isRegistrationClosed) openModal(); // 🌟 Don't open if CLOSED
-          });
+          .catch(() => openModal());
       }, 500);
 
     } catch (error) {
       console.error("Login Error:", error);
-      setErrorMessage("Incorrect email or password. Please try again.");
-      setTimeout(() => setErrorMessage(""), 5000); // Auto clear
+      alert("Incorrect email or password");
     }
   };
 
@@ -540,6 +517,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <li><a href="#about">About</a></li>
             <li><a href="#speakers">Speakers</a></li>
             <li><a href="#key-sessions">Key Sessions</a></li>
+            <li><a href="#key-sessions">Key Sessions</a></li>
             <li><a href="#program">Program</a></li>
             {isLoggedIn && userRole !== 'admin' && (
               <li><a onClick={() => navigate('/resources')} style={{ cursor: 'pointer' }}>Resources</a></li>
@@ -583,6 +561,10 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                         <FiUsers size={16} />
                         Workshop Registrations
                       </button>
+                      <button onClick={() => { openLiveModal(); setShowDashboardDropdown(false); }}>
+                        <FiLayout size={16} />
+                        Live Management
+                      </button>
                       <button onClick={() => { navigate('/resources'); setShowDashboardDropdown(false); }}>
                         <FiLink size={16} />
                         Resources Management
@@ -617,6 +599,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
           <ul className="mobile-links">
             <li><a href="#about" onClick={toggleMenu}>About</a></li>
             <li><a href="#key-sessions" onClick={toggleMenu}>Key Sessions</a></li>
+            <li><a href="#speakers" onClick={toggleMenu}>Speakers</a></li>
             <li><a href="#speakers" onClick={toggleMenu}>Speakers</a></li>
             <li><a href="#program" onClick={toggleMenu}>Program</a></li>
 
@@ -884,24 +867,6 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                       <div className="lo-header">
                         <div className="lo-logo-mark">REMET-AI</div>
                         <p className="lo-subtitle">Access your account</p>
-                        {authMode === 'login' && errorMessage && (
-                          <div className="lo-error-inline" style={{
-                            marginTop: '10px',
-                            background: '#fef2f2',
-                            border: '1px solid #fee2e2',
-                            color: '#dc2626',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            fontSize: '0.85rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            animation: 'fadeInDown 0.3s ease-out'
-                          }}>
-                            <FiAlertCircle size={16} />
-                            <span>{errorMessage}</span>
-                          </div>
-                        )}
                       </div>
 
                       <form onSubmit={handleLoginSubmit} className="lo-form">
@@ -927,15 +892,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
 
                       <p className="lo-footer-text">
                         No account yet?
-                        <button onClick={() => {
-                          if (isRegistrationClosed) {
-                            setAuthMode(null);
-                            setShowCapacityAlert(true);
-                            lockScroll();
-                          } else {
-                            setAuthMode('register');
-                          }
-                        }} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Create Account</button>
+                        <button onClick={() => setAuthMode('register')} style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', marginLeft: '5px' }}>Create Account</button>
                       </p>
                       <div className="lo-divider">
                         <span>Or continue with</span>
@@ -1112,6 +1069,13 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
               </div>
             </div>
           </div>
+        )
+      }
+
+      {/* --- MODAL 7: LIVE STREAM MANAGEMENT --- */}
+      {
+        showLiveModal && (
+          <LiveStreamManagement onClose={closeLiveModal} />
         )
       }
     </>

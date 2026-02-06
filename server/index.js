@@ -54,7 +54,7 @@ app.use(express.json());
    Config
 ----------------------- */
 const MONGO_URI = process.env.MONGO_URI;
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 if (!MONGO_URI) {
   console.error('ERREUR: MONGO_URI manquant dans .env');
@@ -92,12 +92,6 @@ app.get('/', (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   try {
-    // 🌟 Check if registration is CLOSED 🌟
-    const registrationSetting = await Setting.findOne({ key: 'workshop_registration' });
-    if (registrationSetting && registrationSetting.value === false) {
-      return res.status(403).json({ message: "Registration is currently closed. Maximum capacity reached." });
-    }
-
     const { fullName, email, password } = req.body;
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "User exists" });
@@ -131,23 +125,24 @@ app.post('/api/login', async (req, res) => {
 
 app.post('/api/google-login', async (req, res) => {
   try {
-    const { fullName, email, allowCreate } = req.body;
+    const { fullName, email } = req.body;
     let user = await User.findOne({ email });
 
     if (!user) {
-      if (allowCreate === false) {
-        return res.status(404).json({ message: "Account not found. Please create an account first." });
-      }
+      // Check if registration is allowed
+      const setting = await Setting.findOne({ key: 'workshop_registration' });
+      const isRegistrationOpen = setting ? setting.value : true; // Default to open if not set
 
-      // 🌟 Check if registration is CLOSED for NEW users 🌟
-      const registrationSetting = await Setting.findOne({ key: 'workshop_registration' });
-      if (registrationSetting && registrationSetting.value === false) {
-        return res.status(403).json({ message: "Registration is currently closed. Maximum capacity reached." });
+      if (!isRegistrationOpen) {
+        return res.status(403).json({
+          message: "Registration is currently closed due to maximum capacity."
+        });
       }
 
       user = new User({ fullName, email, password: null });
       await user.save();
     }
+
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -411,20 +406,6 @@ app.get('/api/attendance', async (req, res) => {
   } catch (error) {
     console.error("Error fetching attendance:", error);
     res.status(500).json({ message: "Internal server error while fetching attendance data." });
-  }
-});
-
-app.get('/api/attendance/user/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: 'ID utilisateur invalide' });
-    }
-    const attendances = await Attendance.find({ userId: new mongoose.Types.ObjectId(userId) });
-    res.json(attendances);
-  } catch (error) {
-    console.error("Error fetching user attendance:", error);
-    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -1200,6 +1181,10 @@ app.post('/api/settings', async (req, res) => {
 });
 
 
+
+// 🌟 Live Stream Route 🌟
+const liveRoutes = require('./routes/live');
+app.use('/api/live', liveRoutes);
 
 // 404 Handler (Must be after all routes)
 app.use((req, res) => res.status(404).json({ message: 'Route non trouvée' }));
