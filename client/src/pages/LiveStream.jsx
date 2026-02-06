@@ -77,8 +77,8 @@ export default function LiveStream() {
                         }}>
                             <FiArrowLeft size={18} />
                         </div>
-                        <span style={{ display: 'none', '@media (min-width: 768px)': { display: 'inline' } }}>Back to Home</span> {/* Show text only on wider screens if needed, but keeping it simple for now */}
-                        <span>Back to Home</span>
+                        <span style={{ display: 'none', '@media (min-width: 768px)': { display: 'inline' } }}>Back</span> {/* Show text only on wider screens if needed, but keeping it simple for now */}
+                        <span>Back</span>
                     </button>
                 </div>
 
