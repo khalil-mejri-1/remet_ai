@@ -519,9 +519,8 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <li><a href="#key-sessions">Key Sessions</a></li>
             <li><a href="#key-sessions">Key Sessions</a></li>
             <li><a href="#program">Program</a></li>
-            {isLoggedIn && userRole !== 'admin' && (
-              <li><a onClick={() => navigate('/resources')} style={{ cursor: 'pointer' }}>Resources</a></li>
-            )}
+            {/* Resources Link Visible to All */}
+            <li><a onClick={() => navigate('/resources')} style={{ cursor: 'pointer' }}>Materials</a></li>
           </ul>
         </div>
 
@@ -567,7 +566,7 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                       </button>
                       <button onClick={() => { navigate('/resources'); setShowDashboardDropdown(false); }}>
                         <FiLink size={16} />
-                        Resources Management
+                        Materials Management
                       </button>
                     </div>
                   )}
@@ -638,11 +637,10 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
                     </li>
                   </>
                 )}
-                {userRole !== 'admin' && (
-                  <li>
-                    <a onClick={() => { navigate('/resources'); toggleMenu(); }} style={{ cursor: 'pointer' }}>Resources</a>
-                  </li>
-                )}
+                {/* Resources Link Mobile - Always Visible */}
+                <li>
+                  <a onClick={() => { navigate('/resources'); toggleMenu(); }} style={{ cursor: 'pointer' }}>Materials</a>
+                </li>
                 <li className="mobile-login-item">
                   <button
                     className="login-button"

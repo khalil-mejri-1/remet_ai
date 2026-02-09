@@ -432,51 +432,60 @@ app.get('/api/attendance/export-pdf', async (req, res) => {
       return res.status(400).json({ message: "No sessions with attendance enabled" });
     }
 
-    // 2. Get all attendance records
-    const attendances = await Attendance.find();
+    // 2. Get all attendance records AND registrations
+    const [attendances, registrations] = await Promise.all([
+      Attendance.find(),
+      Registration.find()
+    ]);
 
-    // 3. Group by user and calculate global presence
-    const userMap = new Map();
-
+    // 3. Build Attendance Map: UserId -> Set of Completed Session IDs
+    const userAttendanceMap = new Map();
     attendances.forEach(record => {
-      const key = record.email;
-      if (!userMap.has(key)) {
-        userMap.set(key, {
-          fullName: record.fullName,
-          email: record.email,
-          class: record.class || 'N/A',
-          sessionsCompleted: new Set()
-        });
+      // Use string comparison for IDs
+      const uid = String(record.userId);
+      if (!userAttendanceMap.has(uid)) {
+        userAttendanceMap.set(uid, new Set());
       }
-
-      // Check if both check-in and check-out exist
       if (record.checkInTime && record.checkOutTime) {
-        userMap.get(key).sessionsCompleted.add(record.sessionId);
+        userAttendanceMap.get(uid).add(String(record.sessionId));
       }
     });
 
-    // 4. Filter users with global presence (attended ALL enabled sessions)
-    const globalPresentStudents = [];
-    userMap.forEach((userData, email) => {
-      // Calculate how many of the ENABLED sessions this user completed
-      // We check if the user's completed sessions include all the enabled session IDs
-      const relevantCompletedCount = enabledSessions.reduce((count, session) => {
-        return count + (userData.sessionsCompleted.has(String(session.id)) ? 1 : 0);
-      }, 0);
+    // 4. Build Global List from Registrations
+    const globalStudentList = [];
 
-      if (relevantCompletedCount === enabledSessions.length) {
-        globalPresentStudents.push({
-          fullName: userData.fullName,
-          email: userData.email,
-          class: userData.class,
-          sessionsAttended: relevantCompletedCount,
-          status: 'Present'
-        });
-      }
+    registrations.forEach(reg => {
+      const uid = String(reg.userId);
+      const attendedSessionIds = userAttendanceMap.get(uid) || new Set();
+
+      // Calculate how many of the REQUIRED sessions this user completed
+      // We check intersection of attended vs enabled
+      let relevantCompletedCount = 0;
+      enabledSessions.forEach(session => {
+        if (attendedSessionIds.has(String(session.id))) {
+          relevantCompletedCount++;
+        }
+      });
+
+      const isFullyComplete = relevantCompletedCount === enabledSessions.length;
+
+      globalStudentList.push({
+        fullName: reg.fullName,
+        email: reg.email,
+        class: reg.class || 'N/A',
+        sessionsAttended: relevantCompletedCount,
+        totalRequired: enabledSessions.length,
+        status: isFullyComplete ? 'Full' : (relevantCompletedCount > 0 ? 'Partial' : 'None')
+      });
     });
 
-    // Sort by name
-    globalPresentStudents.sort((a, b) => a.fullName.localeCompare(b.fullName));
+    // Sort: High completion first, then Name
+    globalStudentList.sort((a, b) => {
+      if (b.sessionsAttended !== a.sessionsAttended) {
+        return b.sessionsAttended - a.sessionsAttended;
+      }
+      return a.fullName.localeCompare(b.fullName);
+    });
 
     // 5. Generate Styled PDF
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
@@ -507,7 +516,7 @@ app.get('/api/attendance/export-pdf', async (req, res) => {
       doc.fontSize(20).fillColor(primaryColor).font('Helvetica-Bold').text('REMET-AI', 40, 40);
     }
 
-    doc.fontSize(16).fillColor(darkColor).font('Helvetica-Bold').text('Global Attendance Report', 200, 45, { align: 'right' });
+    doc.fontSize(16).fillColor(darkColor).font('Helvetica-Bold').text('Global Type Attendance Report', 200, 45, { align: 'right' });
     doc.fontSize(10).fillColor(mutedColor).font('Helvetica').text(`Generated: ${new Date().toLocaleString()}`, 200, 65, { align: 'right' });
 
     // Header Separator
@@ -518,8 +527,8 @@ app.get('/api/attendance/export-pdf', async (req, res) => {
     const summaryY = doc.y;
     doc.rect(40, summaryY, 515, 60).fillColor(lightColor).fill();
     doc.fillColor(darkColor).font('Helvetica-Bold').fontSize(11);
-    doc.text(`Required Sessions: ${enabledSessions.length}`, 60, summaryY + 15);
-    doc.text(`Identified Full Participants: ${globalPresentStudents.length}`, 60, summaryY + 35);
+    doc.text(`Total Students: ${globalStudentList.length}`, 60, summaryY + 15);
+    doc.text(`Required Sessions: ${enabledSessions.length}`, 60, summaryY + 35);
     doc.moveDown(5);
 
     // --- Table Headers ---
@@ -542,7 +551,7 @@ app.get('/api/attendance/export-pdf', async (req, res) => {
     // --- Table Rows ---
     doc.font('Helvetica').fontSize(8.5);
 
-    globalPresentStudents.forEach((student, index) => {
+    globalStudentList.forEach((student, index) => {
       // Alternate row background
       if (index % 2 === 0) {
         doc.rect(40, currentY, 515, 25).fillColor(lightColor).fill();
@@ -558,10 +567,17 @@ app.get('/api/attendance/export-pdf', async (req, res) => {
       doc.text(student.class || 'N/A', colX.class, rowY, { width: colWidths.class, lineBreak: false });
 
       // Count session bubble
-      doc.text(student.sessionsAttended.toString(), colX.sessions, rowY, { width: colWidths.sessions, align: 'center' });
+      const sessionText = `${student.sessionsAttended}/${student.totalRequired}`;
+      doc.text(sessionText, colX.sessions, rowY, { width: colWidths.sessions, align: 'center' });
 
-      // Status Badge (Simplified Present text)
-      doc.fillColor('#16a34a').font('Helvetica-Bold').text('PRESENT', colX.status, rowY);
+      // Status Badge
+      if (student.status === 'Full') {
+        doc.fillColor('#16a34a').font('Helvetica-Bold').text('FULL', colX.status, rowY);
+      } else if (student.status === 'Partial') {
+        doc.fillColor('#d97706').font('Helvetica-Bold').text('PART', colX.status, rowY);
+      } else {
+        doc.fillColor('#ef4444').font('Helvetica-Bold').text('NONE', colX.status, rowY);
+      }
       doc.font('Helvetica'); // Reset font
 
       currentY += 25;
