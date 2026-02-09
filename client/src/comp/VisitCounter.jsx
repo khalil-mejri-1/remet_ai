@@ -8,6 +8,9 @@ export default function VisitCounter() {
     const [displayStats, setDisplayStats] = useState({ totalVisits: 0, onlineUsers: 0 });
     const [isVisible, setIsVisible] = useState(false);
 
+    // Initialize random offset once on mount (1 to 15)
+    const [baseOffset] = useState(() => Math.floor(Math.random() * 15) + 1);
+
     useEffect(() => {
         let visitorId = localStorage.getItem('visitorId');
         if (!visitorId) {
@@ -25,7 +28,7 @@ export default function VisitCounter() {
                 });
                 setStats({
                     ...response.data,
-                    onlineUsers: (response.data.onlineUsers || 0) + 15
+                    onlineUsers: (response.data.onlineUsers || 0) + baseOffset
                 });
             } catch (err) {
                 console.error('Error fetching stats:', err);
@@ -35,7 +38,7 @@ export default function VisitCounter() {
         fetchStats();
         const interval = setInterval(fetchStats, 15000);
         return () => clearInterval(interval);
-    }, []);
+    }, [baseOffset]);
 
     // Animation de comptage
     useEffect(() => {
