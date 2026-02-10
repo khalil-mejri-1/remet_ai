@@ -517,7 +517,6 @@ export default function Navbar({ isWorkshopOpen, onOpenWorkshop, onCloseWorkshop
             <li><a href="#about">About</a></li>
             <li><a href="#speakers">Speakers</a></li>
             <li><a href="#key-sessions">Key Sessions</a></li>
-            <li><a href="#key-sessions">Key Sessions</a></li>
             <li><a href="#program">Program</a></li>
             {/* Resources Link Visible to All */}
             <li><a onClick={() => navigate('/resources')} style={{ cursor: 'pointer' }}>Materials</a></li>
