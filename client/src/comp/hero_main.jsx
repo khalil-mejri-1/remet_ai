@@ -113,6 +113,13 @@ export default function Hero_main({ onRegisterClick, isRegistrationClosed }) {
                                     LIVE STREAM
                                 </button>
                             </Link>
+
+                            {/* Button 3: MATERIALS */}
+                            <Link to="/resources" style={{ textDecoration: 'none' }}>
+                                <button className="btn btn-materials">
+                                    MATERIALS
+                                </button>
+                            </Link>
                         </div>
 
                         <style>{`
@@ -202,6 +209,43 @@ export default function Hero_main({ onRegisterClick, isRegistrationClosed }) {
                             }
 
                             .btn-live-stream:hover::after {
+                                animation: shine 0.75s;
+                            }
+
+                            .btn-materials {
+                                position: relative;
+                                background-color: white;
+                                color: #10b981; /* Emerald Green */
+                                border: 2px solid #10b981;
+                                font-weight: 700;
+                                font-size: 0.95rem;
+                                padding: 10px 24px;
+                                overflow: hidden;
+                                transition: all 0.3s ease;
+                            }
+                            .btn-materials:hover {
+                                background-color: #10b981;
+                                color: white;
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                            }
+                            .btn-materials::after {
+                                content: '';
+                                position: absolute;
+                                top: 0;
+                                left: -150%;
+                                width: 100%;
+                                height: 100%;
+                                background: linear-gradient(
+                                    90deg, 
+                                    transparent, 
+                                    rgba(255, 255, 255, 0.6), 
+                                    transparent
+                                );
+                                transform: skewX(-20deg);
+                                transition: none;
+                            }
+                            .btn-materials:hover::after {
                                 animation: shine 0.75s;
                             }
                         `}</style>
