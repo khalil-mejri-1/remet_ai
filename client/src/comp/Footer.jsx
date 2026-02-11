@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="modern-footer">
       <div className="footer-content">
-        <h3 className="footer-brand">REMET-AI 2026</h3>
+        <h3 className="footer-brand">REMET AI 2026</h3>
         <p className="footer-tagline">AI GENERATION : LEAD THE CHANGE</p>
 
         <div className="social-links">
