@@ -2,14 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth"; // 1. استيراد Redirect
 
 const firebaseConfig = {
-  // ... (نفس إعداداتك السابقة لا تغيرها)
-  apiKey: "***REDACTED***",
-  authDomain: "remet-acc50.firebaseapp.com",
-  projectId: "remet-acc50",
-  storageBucket: "remet-acc50.firebasestorage.app",
-  messagingSenderId: "114981685764",
-  appId: "1:114981685764:web:6a7d68c597ba91a84ec351",
-  measurementId: "G-KYS3XCGVKM"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const app = initializeApp(firebaseConfig);
